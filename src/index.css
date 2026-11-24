@@ -6,272 +6,345 @@
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 
+/* Night Zen Garden: Moonlit Basalt Stones & Quiet Black Water */
 :root[data-theme="dark"] {
   --bg: #000000;
-  --fg: #e1ddd5;
-  --fg-soft: #c4bfb6;
-  --muted: #9b978f;
-  --line: rgba(0, 0, 0, .72);
-  --line-strong: rgba(0, 0, 0, .84);
-  --kohaku: #ff4d00;
-  --kohaku-fg: #080706;
-  --gold: #d7aa63;
-  --moss: #72a083;
-  --stone-surface: #292d30;
-  --stone-face: #252a2e;
-  --stone-edge: #566068;
-  --stone-side: #171b1e;
-  --stone-wet: #080a0c;
-  --stone-highlight: rgba(233, 224, 205, .24);
-  --waterline: #a8cce0;
-  --carved-ink: #0b0c0e;
-  --carved-body: #c4bfb6;
-  --tag-bg: #171a1c;
-  --hanko: #c93b18;
-  --hanko-edge: #f06a42;
-  --rail: #464b4f;
-  --rail-shadow: #090b0c;
-  --slider-track: #15181a;
-  --slider-thumb: #2d3236;
+  --fg: #e8e3d9;
+  --fg-soft: #c2bcb0;
+  --muted: #8f8a80;
+
+  /* Stone Material Tokens */
+  --stone-top-hi: #272c31;
+  --stone-top: #1d2125;
+  --stone-top-lo: #16191d;
+  --stone-rim: rgba(214, 224, 235, 0.22);
+  --stone-side-hi: #191d21;
+  --stone-side: #0f1215;
+  --stone-wet: #06080a;
+  --waterline: rgba(152, 194, 224, 0.42);
+
+  /* Chiseled Typography & Garden Accents */
+  --carved-heading: #ebe6dc;
+  --carved-top-shadow: rgba(0, 0, 0, 0.95);
+  --carved-bot-glint: rgba(255, 255, 255, 0.14);
+  --line: rgba(0, 0, 0, 0.78);
+  --line-glint: rgba(255, 255, 255, 0.09);
+
+  --kohaku: #d9532f;
+  --kohaku-fg: #faf6f0;
+  --moss: #74a382;
+  --gold: #cfa35c;
+
+  /* Hanko Stamp & Recessed Stone Plaques */
+  --hanko: #b8371c;
+  --hanko-hover: #cc4022;
+  --hanko-border: rgba(244, 152, 126, 0.45);
+  --plaque-bg: #14171a;
+  --plaque-border: rgba(255, 255, 255, 0.11);
 }
 
+/* Day Zen Garden: Sunlit Shirakawa Granite & Celadon Pond */
 :root[data-theme="light"] {
   --bg: #a9d3e2;
-  --fg: #24211c;
-  --fg-soft: #26231f;
+  --fg: #1d1b18;
+  --fg-soft: #35312b;
   --muted: #615b52;
-  --line: rgba(12, 12, 12, .72);
-  --line-strong: rgba(12, 12, 12, .82);
-  --kohaku: #b33418;
-  --kohaku-fg: #fffaf2;
-  --gold: #93632e;
-  --moss: #356649;
-  --stone-surface: #dedbd3;
-  --stone-face: #e0ddd4;
-  --stone-edge: #f7f3e9;
-  --stone-side: #a7a49c;
-  --stone-wet: #666a68;
-  --stone-highlight: rgba(255, 255, 255, .94);
-  --waterline: #6ea8b9;
-  --carved-ink: #3f3b35;
-  --carved-body: #26231f;
-  --tag-bg: #d0ccc3;
-  --hanko: #c93b18;
-  --hanko-edge: #f0714f;
-  --rail: #aaa69c;
-  --rail-shadow: #655f55;
-  --slider-track: #d4d0c7;
-  --slider-thumb: #f0ece4;
+
+  /* Stone Material Tokens */
+  --stone-top-hi: #eeeae1;
+  --stone-top: #e3dfd6;
+  --stone-top-lo: #d4cfc4;
+  --stone-rim: rgba(255, 255, 255, 0.92);
+  --stone-side-hi: #b5b0a5;
+  --stone-side: #8f8a80;
+  --stone-wet: #586466;
+  --waterline: rgba(255, 255, 255, 0.65);
+
+  /* Chiseled Typography & Garden Accents */
+  --carved-heading: #1c1a17;
+  --carved-top-shadow: rgba(0, 0, 0, 0.22);
+  --carved-bot-glint: rgba(255, 255, 255, 0.88);
+  --line: rgba(42, 38, 32, 0.24);
+  --line-glint: rgba(255, 255, 255, 0.75);
+
+  --kohaku: #b5381e;
+  --kohaku-fg: #fffaf3;
+  --moss: #2d6342;
+  --gold: #8c5d23;
+
+  /* Hanko Stamp & Recessed Stone Plaques */
+  --hanko: #b5381e;
+  --hanko-hover: #c74124;
+  --hanko-border: rgba(255, 224, 214, 0.55);
+  --plaque-bg: #d7d2c7;
+  --plaque-border: rgba(36, 33, 28, 0.2);
 }
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 2rem;
+  scroll-padding-top: 2.5rem;
   overflow-x: clip;
 }
+
 body {
   margin: 0;
   overflow-x: clip;
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
-  transition: background-color .65s ease, color .35s ease;
+  transition: background-color 0.65s ease, color 0.35s ease;
 }
+
 .skip-link {
   position: fixed;
   top: -100px;
   left: 1rem;
   z-index: 60;
-  padding: .65rem 1rem;
-  background: var(--kohaku);
+  padding: 0.65rem 1rem;
+  background: var(--hanko);
   color: var(--kohaku-fg);
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 600;
-  transition: top .18s ease;
+  transition: top 0.18s ease;
 }
-.skip-link:focus-visible { top: 1rem; outline: 2px solid var(--fg); outline-offset: 2px; }
-.font-display { font-family: var(--font-display); letter-spacing: -.015em; }
-.font-mono-tech { font-family: var(--font-mono); }
 
+.skip-link:focus-visible {
+  top: 1rem;
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+}
+
+.font-mono-tech {
+  font-family: var(--font-mono);
+}
+
+/* Staggered Tobi-Ishi Stepping Stone Path */
 .stepping-stone {
   position: relative;
   isolation: isolate;
-  width: min(calc(100% - 5rem), 48rem);
+  width: min(calc(100% - 2.25rem), 49rem);
   margin-inline: auto;
-  border-radius: var(--stone-radius, 44% 56% 52% 48% / 18% 22% 20% 24%);
-  filter: drop-shadow(0 22px 24px rgba(0,0,0,.4));
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.stepping-stone::before {
+
+@media (min-width: 768px) {
+  .stone-shift-left {
+    transform: translateX(-3.25%);
+  }
+  .stone-shift-right {
+    transform: translateX(3.25%);
+  }
+}
+
+.stone-slab-svg {
   position: absolute;
-  z-index: -2;
-  inset: 5px 8px -13px;
-  border-radius: inherit;
-  background: linear-gradient(118deg, var(--stone-edge), var(--stone-side) 36%, var(--stone-wet) 88%);
-  box-shadow: inset 0 8px 12px rgba(255,255,255,.1), 0 18px 18px rgba(0,0,0,.38);
-  content: "";
-}
-.stepping-stone::after {
-  position: absolute;
-  z-index: -3;
-  inset: -15px -12px -20px;
-  border: 1px solid color-mix(in srgb, var(--waterline, #8db4da) 48%, transparent);
-  border-radius: inherit;
-  box-shadow: 0 0 0 8px color-mix(in srgb, var(--waterline, #8db4da) 13%, transparent), 0 0 0 18px color-mix(in srgb, var(--waterline, #8db4da) 8%, transparent);
-  content: "";
-  opacity: .56;
-  pointer-events: none;
-  animation: stone-ripple 8s ease-in-out infinite;
-}
-.stone-collar {
-  position: absolute;
-  z-index: -1;
-  inset: 4px -5px -7px;
-  border: 8px solid var(--stone-wet);
-  border-radius: inherit;
-  box-shadow: 0 4px 10px rgba(0,0,0,.45), inset 0 -6px 10px rgba(0,0,0,.24);
-  filter: blur(1px);
-  pointer-events: none;
-}
-.stone-top {
-  position: relative;
+  inset: -14px -18px -26px -18px;
+  width: calc(100% + 36px);
+  height: calc(100% + 40px);
   z-index: 0;
-  overflow: hidden;
-  border-radius: inherit;
-  background-color: var(--stone-face);
-  background-image: radial-gradient(ellipse at 17% 8%, var(--stone-highlight), transparent 43%), radial-gradient(ellipse at 83% 96%, rgba(0,0,0,.27), transparent 46%), linear-gradient(138deg, rgba(255,255,255,.12), transparent 45%, rgba(0,0,0,.2));
-  box-shadow: inset 0 2px 2px rgba(255,255,255,.16), inset -8px -10px 20px rgba(0,0,0,.16);
-}
-.stone-grain {
-  position: absolute;
-  z-index: 2;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  opacity: .2;
-  mix-blend-mode: soft-light;
   pointer-events: none;
+  overflow: visible;
 }
-@keyframes stone-ripple {
-  0%, 100% { transform: scale(.99); opacity: .36; }
-  50% { transform: scale(1.015); opacity: .68; }
+
+.stone-ripple-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: stone-meniscus 7.5s ease-in-out infinite;
 }
+
+@keyframes stone-meniscus {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: scale(0.994);
+  }
+  50% {
+    opacity: 0.62;
+    transform: scale(1.012);
+  }
+}
+
 .stone-content {
   position: relative;
-  z-index: 3;
-  padding: 3rem 2.5rem;
+  z-index: 2;
+  padding: 2.5rem 2rem 2.75rem;
 }
+
 @media (min-width: 640px) {
-  .stone-content { padding: 3.5rem 4rem; }
+  .stone-content {
+    padding: 3.25rem 3.75rem 3.5rem;
+  }
 }
+
+/* Chiseled Stone Section Header */
 .stone-heading {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: .75rem;
+  gap: 0.75rem;
   margin-bottom: 1.75rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid var(--line);
-  box-shadow: 0 1px 0 rgba(255,255,255,.1);
+  box-shadow: 0 1px 0 var(--line-glint);
 }
+
 .stone-inlay {
   display: inline-block;
-  width: 5px;
+  width: 4px;
   height: 20px;
+  border-radius: 1px;
   background: var(--kohaku);
-  box-shadow: inset 1px 1px 2px rgba(0,0,0,.72), 1px 1px 0 rgba(255,255,255,.2);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.65),
+    0 1px 0 var(--carved-bot-glint);
 }
+
+/* Engraved Typography (Hori) */
 .engraved-title,
+.stepping-stone h1,
 .stepping-stone h3 {
-  color: var(--carved-ink);
-  text-shadow: 0 1px 0 rgba(255,255,255,.16), 0 -1px 1px rgba(0,0,0,.95);
+  color: var(--carved-heading);
+  text-shadow:
+    0 -1px 1px var(--carved-top-shadow),
+    0 1px 0 var(--carved-bot-glint);
 }
-.stepping-stone h1 {
-  color: var(--carved-ink);
-  text-shadow: 0 1px 0 rgba(255,255,255,.16), 0 -1px 1px rgba(0,0,0,.95);
-}
+
 .stone-content p,
 .stone-content li {
-  text-shadow: 0 -1px 0 rgba(0,0,0,.85), 0 1px 0 rgba(255,255,255,.06);
+  text-shadow: 0 1px 0 var(--carved-bot-glint);
 }
-.stone-content p:not([class*="text-"]),
-.stone-content li { color: var(--carved-body); }
-#top .stepping-stone { --stone-radius: 47% 53% 51% 49% / 15% 19% 23% 22%; margin-top: auto; }
-#experience .stepping-stone { --stone-radius: 41% 59% 47% 53% / 20% 18% 22% 24%; transform: translateX(-2.5%); }
-#projects .stepping-stone { --stone-radius: 53% 47% 55% 45% / 19% 22% 18% 23%; transform: translateX(2.5%); }
-#skills .stepping-stone { --stone-radius: 46% 54% 50% 50% / 18% 20% 24% 20%; transform: translateX(-1.5%); }
-#contact .stepping-stone { --stone-radius: 55% 45% 48% 52% / 20% 17% 24% 21%; transform: translateX(1.5%); }
-main { gap: clamp(8rem, 16vh, 12rem) !important; padding-bottom: 14rem; }
-.stone-content .border-t,
-.stone-content .border-b,
-.stone-content .divide-y > :not(:first-child) {
+
+.stone-divider {
   border-color: var(--line) !important;
-  box-shadow: 0 1px 0 rgba(255,255,255,.1);
+  box-shadow: 0 1px 0 var(--line-glint);
 }
+
+/* Smooth River-Pebble Skill Chips */
 .tag {
   display: inline-flex;
-  padding: 4px 9px;
-  border: 1px solid var(--stone-edge);
+  align-items: center;
+  padding: 4px 11px;
+  border: 1px solid var(--plaque-border);
   border-radius: 999px;
-  background: linear-gradient(145deg, var(--tag-bg), var(--stone-side));
-  box-shadow: inset 0 2px 4px rgba(0,0,0,.72), 0 1px 0 rgba(255,255,255,.08);
-  color: var(--carved-body);
+  background: var(--plaque-bg);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.35),
+    0 1px 0 var(--line-glint);
+  color: var(--fg-soft);
   font-family: var(--font-mono);
   font-size: 11.5px;
-  text-shadow: 0 -1px 0 rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.08);
+  transition: border-color 0.18s ease, color 0.18s ease;
 }
-.tag:hover { border-color: var(--moss); color: var(--fg); }
+
+.tag:hover {
+  border-color: var(--moss);
+  color: var(--fg);
+}
+
+/* Recessed Stone Plaque & Cinnabar Hanko Seal Buttons */
 .btn {
   display: inline-flex;
   min-height: 44px;
   align-items: center;
   justify-content: center;
-  gap: .45rem;
+  gap: 0.45rem;
   padding: 0 18px;
-  border: 1px solid var(--stone-edge);
-  border-radius: 3px;
-  background: linear-gradient(145deg, var(--stone-surface), var(--stone-side));
-  box-shadow: inset 0 2px 4px rgba(0,0,0,.85), 0 1px 0 rgba(255,255,255,.1);
-  color: var(--carved-body);
+  border: 1px solid var(--plaque-border);
+  border-radius: 4px;
+  background: var(--plaque-bg);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.45),
+    0 1px 0 var(--line-glint);
+  color: var(--fg);
   font-family: var(--font-mono);
   font-size: 12.5px;
   font-weight: 500;
-  text-shadow: 0 -1px 0 rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.08);
   cursor: pointer;
-  transition: transform .16s ease, border-color .18s ease, color .18s ease;
+  transition:
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
 }
-.btn:hover { border-color: var(--moss); color: var(--fg); transform: translateY(-2px); }
-.btn:active { transform: translateY(0) scale(.985); }
-.btn:focus-visible { outline: 2px solid var(--kohaku); outline-offset: 2px; }
+
+.btn:hover {
+  border-color: var(--moss);
+  transform: translateY(-2px);
+}
+
+.btn:active {
+  transform: translateY(0) scale(0.985);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--kohaku);
+  outline-offset: 2px;
+}
+
+/* Traditional Carved Cinnabar Hanko Seal CTA */
 .btn-main {
-  border-color: var(--hanko-edge);
-  background-color: var(--hanko);
-  background-image: linear-gradient(145deg, rgba(255,255,255,.12), transparent 42%, rgba(60,0,0,.2));
-  color: #fff7ed;
-  box-shadow: inset 0 2px 4px rgba(76,13,4,.85), 0 1px 0 rgba(255,255,255,.2), 0 2px 5px rgba(0,0,0,.25);
-  text-shadow: 0 1px 1px rgba(50,0,0,.6);
+  border-color: var(--hanko-border);
+  background: var(--hanko);
+  box-shadow:
+    inset 0 0 0 1.5px rgba(255, 245, 235, 0.2),
+    inset 0 2px 4px rgba(55, 10, 2, 0.5),
+    0 3px 10px rgba(0, 0, 0, 0.28);
+  color: var(--kohaku-fg);
+  text-shadow: 0 1px 1px rgba(45, 8, 2, 0.55);
   font-weight: 600;
 }
-.btn-main:hover { border-color: #f18869; color: #fff7ed; filter: brightness(1.08); }
 
+.btn-main:hover {
+  background: var(--hanko-hover);
+  border-color: var(--hanko-border);
+  color: var(--kohaku-fg);
+  transform: translateY(-2px);
+}
+
+/* Once-on-Load Hero Entrance */
 @keyframes hero-settle {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-[data-enter] .enter-1 { opacity: 0; animation: hero-settle .7s cubic-bezier(.22,1,.36,1) forwards; }
-[data-enter] .enter-2 { opacity: 0; animation: hero-settle .7s cubic-bezier(.22,1,.36,1) .12s forwards; }
-@media (max-width: 767px) {
-  .theme-slider-thumb { transition-duration: .24s; }
-  .stone-content { padding: 3rem 2.5rem; }
-  #experience .stepping-stone,
-  #projects .stepping-stone,
-  #skills .stepping-stone,
-  #contact .stepping-stone { transform: none; }
+
+[data-enter] .enter-1 {
+  opacity: 0;
+  animation: hero-settle 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
+
+[data-enter] .enter-2 {
+  opacity: 0;
+  animation: hero-settle 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.12s forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .btn, .theme-slider-thumb { transition: none; }
-  [data-enter] .enter-1, [data-enter] .enter-2 { opacity: 1; animation: none; }
+  html {
+    scroll-behavior: auto;
+  }
+  .btn,
+  .stepping-stone,
+  .theme-slider-thumb {
+    transition: none;
+  }
+  .stone-ripple-ring {
+    animation: none;
+  }
+  [data-enter] .enter-1,
+  [data-enter] .enter-2 {
+    opacity: 1;
+    animation: none;
+  }
 }

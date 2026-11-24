@@ -87,7 +87,6 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       val = new Float32Array(cols * rows); col = new Uint8Array(cols * rows);
     };
     resize();
-    document.fonts?.ready.then(() => { resize(); syncWorld(); });
 
     const syncWorld = () => {
       worldHeight = Math.max(window.innerHeight, document.documentElement.scrollHeight);
@@ -97,14 +96,17 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         steppingStones.push({
           x: rect.left + window.scrollX + rect.width / 2,
           y: rect.top + window.scrollY + rect.height / 2,
-          rx: rect.width / 2 + 52,
-          ry: rect.height / 2 + 44,
+          rx: rect.width / 2 + 46,
+          ry: rect.height / 2 + 38,
         });
       });
     };
     syncWorld();
+    document.fonts?.ready.then(() => { resize(); syncWorld(); });
+
     const worldObserver = new ResizeObserver(syncWorld);
     worldObserver.observe(document.documentElement);
+
     const onScroll = () => {
       const nextCameraY = window.scrollY;
       mouse.y += nextCameraY - cameraY;
@@ -114,23 +116,28 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
     window.addEventListener("scroll", onScroll, { passive: true });
 
     const pickTarget = (k: Koi) => {
-      const pad = 140;
+      const pad = 130;
       for (let n = 0; n < 8; n++) {
-        const an = k.a + (Math.random() - 0.5) * 1.6, d = 280 + Math.random() * 320;
+        const an = k.a + (Math.random() - 0.5) * 1.6, d = 280 + Math.random() * 340;
         const x = k.x + Math.cos(an) * d, y = k.y + Math.sin(an) * d;
-        if (x > pad && x < vw - pad && y > pad && y < worldHeight - pad) { k.tx = x; k.ty = y; k.wanderTimer = 6; return; }
+        if (x > pad && x < vw - pad && y > pad && y < worldHeight - pad) {
+          k.tx = x; k.ty = y; k.wanderTimer = 6; return;
+        }
       }
-      k.tx = vw / 2 + (Math.random() - 0.5) * vw * 0.4;
-      k.ty = Math.max(pad, Math.min(worldHeight - pad, k.y + (Math.random() - 0.5) * 500));
+      k.tx = vw / 2 + (Math.random() - 0.5) * vw * 0.45;
+      k.ty = Math.max(pad, Math.min(worldHeight - pad, k.y + (Math.random() - 0.5) * 520));
       k.wanderTimer = 6;
     };
 
-    const count = 18;
+    const count = 20;
     const kois: Koi[] = Array.from({ length: count }, (_, n) => {
-      const s = 1.65 + (n / Math.max(1, count - 1)) * 0.65 + Math.random() * 0.1;
-      const x = Math.random() * vw, y = ((n + Math.random()) / count) * worldHeight, a = Math.random() * 6.283;
+      const s = 1.6 + (n / Math.max(1, count - 1)) * 0.65 + Math.random() * 0.1;
+      const x = Math.random() * vw;
+      const y = ((n + Math.random()) / count) * worldHeight;
+      const a = Math.random() * 6.283;
       const base = n % 3;
-      const pat: number[] = []; let cur = base;
+      const pat: number[] = [];
+      let cur = base;
       for (let i = 0; i < N; i++) {
         if (Math.random() < 0.28) cur = Math.floor(Math.random() * 3);
         pat.push(i === 0 ? base : cur);
@@ -167,7 +174,10 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       foods.push({ x: e.clientX, y: worldY, age: 0, dead: false });
       addRipple(e.clientX, worldY);
     };
-    const onMove = (e: PointerEvent) => { mouse.x = e.clientX; mouse.y = e.clientY + window.scrollY; };
+    const onMove = (e: PointerEvent) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY + window.scrollY;
+    };
 
     canvas.addEventListener("pointerdown", onDown);
     window.addEventListener("pointermove", onMove);
@@ -212,12 +222,13 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         ta = baseAngle + Math.sin(k.ph * 0.25) * 0.14;
       }
 
-      const m = 115;
+      const m = 110;
       let pushX = 0, pushY = 0, avoidX = 0, avoidY = 0;
       if (k.x < m) pushX += (m - k.x) / m;
       if (k.x > vw - m) pushX -= (k.x - (vw - m)) / m;
       if (k.y < m) pushY += (m - k.y) / m;
       if (k.y > worldHeight - m) pushY -= (k.y - (worldHeight - m)) / m;
+
       for (const stone of steppingStones) {
         const dx = k.x - stone.x;
         const dy = k.y - stone.y;
@@ -230,8 +241,12 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         avoidX += Math.cos(direction) * force;
         avoidY += Math.sin(direction) * force;
       }
+
       if (pushX !== 0 || pushY !== 0 || avoidX !== 0 || avoidY !== 0) {
-        ta = Math.atan2(Math.sin(ta) + pushY * 1.5 + avoidY * 2.4, Math.cos(ta) + pushX * 1.5 + avoidX * 2.4);
+        ta = Math.atan2(
+          Math.sin(ta) + pushY * 1.5 + avoidY * 2.5,
+          Math.cos(ta) + pushX * 1.5 + avoidX * 2.5
+        );
       }
 
       if (Math.hypot(mouse.x - k.x, mouse.y - k.y) < 105) {
@@ -292,7 +307,12 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
         for (let h = 0; h < 3; h++) {
           const f = h / 3;
-          shadowBlobs.push({ x: p.x + (q.x - p.x) * f, y: p.y + (q.y - p.y) * f, r: (W[i] + (W[j] - W[i]) * f) * u, s: k.s });
+          shadowBlobs.push({
+            x: p.x + (q.x - p.x) * f,
+            y: p.y + (q.y - p.y) * f,
+            r: (W[i] + (W[j] - W[i]) * f) * u,
+            s: k.s,
+          });
         }
         if (k.spot[i] >= 0) {
           const sg = i % 2 ? 1 : -1;
@@ -329,7 +349,12 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           const d = (j / 5) * len;
           const sway = Math.sin(k.ph - (N - 1 + j * 0.6) * 0.65) * u * (0.1 + (N - 1) * 0.16 + j * 0.2) - base;
           const lat = f * (j / 5) * 1.5 * u + sway;
-          shadowBlobs.push({ x: t.x - t.tx * d + t.nx * lat, y: t.y - t.ty * d + t.ny * lat, r: 0.75 * u * (1 - j * 0.08), s: k.s });
+          shadowBlobs.push({
+            x: t.x - t.tx * d + t.nx * lat,
+            y: t.y - t.ty * d + t.ny * lat,
+            r: 0.75 * u * (1 - j * 0.08),
+            s: k.s,
+          });
           splat(
             t.x - t.tx * d + t.nx * lat,
             t.y - t.ty * d + t.ny * lat,
@@ -349,35 +374,47 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       }
     };
 
-    const rocks = ([[0.18, 0.34, 58, 30, 1.1], [0.82, 0.22, 48, 26, 2.3], [0.85, 0.72, 66, 34, 0.4], [0.24, 0.78, 52, 28, 3.1], [0.56, 0.88, 38, 20, 1.9]] as number[][])
-      .map(([nx, ny, rx, ry, ph]) => ({ nx, ny, rx, ry, ph }));
-    const weeds = ([[0.12, 0.64], [0.42, 0.16], [0.74, 0.82], [0.91, 0.42]] as number[][]).map(([nx, ny], i) => ({ nx, ny, ph: i * 1.7 }));
+    /* Distribute submerged rocks, pond weeds, bank stones, and lily pads across the full tall pond */
+    const rocks = Array.from({ length: 14 }, (_, i) => ({
+      nx: (0.12 + ((i * 0.37) % 0.78)),
+      ny: (i + 0.35) / 14,
+      rx: 42 + (i % 4) * 9,
+      ry: 22 + (i % 3) * 6,
+      ph: i * 1.15,
+    }));
 
-    const bankStones = ([
-      [0.02, 0.10, 86, 48, 0.4], [0.06, 0.16, 60, 36, 1.8],
-      [0.97, 0.14, 82, 46, 2.1], [0.94, 0.21, 56, 34, 0.9],
-      [0.03, 0.88, 94, 52, 1.3], [0.09, 0.94, 68, 38, 2.7],
-      [0.96, 0.86, 90, 50, 0.7], [0.90, 0.93, 64, 36, 2.2],
-      [0.48, 0.98, 76, 36, 1.5],
-    ] as number[][]).map(([nx, ny, rx, ry, ph]) => ({ nx, ny, rx, ry, ph }));
+    const weeds = Array.from({ length: 12 }, (_, i) => ({
+      nx: i % 2 === 0 ? 0.06 + (i % 3) * 0.04 : 0.88 + (i % 3) * 0.03,
+      ny: (i + 0.5) / 12,
+      ph: i * 1.7,
+    }));
 
-    const grassTufts = [
-      { nx: 0.03, ny: 0.13, blades: 9, h: 7, ph: 0.2 },
-      { nx: 0.08, ny: 0.18, blades: 7, h: 6, ph: 1.4 },
-      { nx: 0.015, ny: 0.52, blades: 8, h: 7, ph: 2.3 },
-      { nx: 0.04, ny: 0.89, blades: 10, h: 8, ph: 0.8 },
-      { nx: 0.11, ny: 0.95, blades: 7, h: 6, ph: 2.9 },
-      { nx: 0.49, ny: 0.97, blades: 8, h: 6, ph: 1.7 },
-      { nx: 0.96, ny: 0.16, blades: 9, h: 7, ph: 1.1 },
-      { nx: 0.98, ny: 0.58, blades: 7, h: 6, ph: 2.6 },
-      { nx: 0.95, ny: 0.88, blades: 10, h: 8, ph: 0.5 },
-      { nx: 0.89, ny: 0.94, blades: 7, h: 6, ph: 3.1 },
-    ];
+    const bankStones = Array.from({ length: 18 }, (_, i) => {
+      const leftSide = i % 2 === 0;
+      return {
+        nx: leftSide ? 0.015 + (i % 3) * 0.025 : 0.985 - (i % 3) * 0.025,
+        ny: (i + 0.4) / 18,
+        rx: 68 + (i % 3) * 14,
+        ry: 38 + (i % 3) * 8,
+        ph: i * 0.85,
+      };
+    });
 
-    const lilyPads = Array.from({ length: 10 }, (_, index) => ({
-      nx: 0.12 + Math.random() * 0.76,
-      ny: (index + 0.5) / 10,
-      r: 18 + Math.random() * 12,
+    const grassTufts = Array.from({ length: 16 }, (_, i) => {
+      const leftSide = i % 2 === 0;
+      return {
+        nx: leftSide ? 0.02 + (i % 3) * 0.03 : 0.98 - (i % 3) * 0.03,
+        ny: (i + 0.55) / 16,
+        blades: 7 + (i % 4),
+        h: 6 + (i % 3),
+        ph: i * 0.7,
+      };
+    });
+
+    const lilyPads = Array.from({ length: 12 }, (_, index) => ({
+      nx: index % 2 === 0 ? 0.09 + Math.random() * 0.14 : 0.77 + Math.random() * 0.14,
+      ny: (index + 0.5) / 12,
+      r: 18 + Math.random() * 11,
       notch: Math.random() * Math.PI * 2,
       flower: index % 3 === 0,
     }));
@@ -410,16 +447,17 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       glowCtx.setTransform(bloomScale, 0, 0, bloomScale, 0, -cameraY * bloomScale);
       glowCtx.clearRect(0, cameraY, vw, vh);
 
+      /* Celestial positions anchored in the top pond reflection so Moon & Sun visibly trade places */
       const mProg = Math.min(1, tmix / 0.65);
       const mEase = mProg * mProg * (3 - 2 * mProg);
       const moonX = vw * (0.28 - 0.22 * mEase);
-      const moonY = worldHeight * (0.12 + 0.34 * mEase);
+      const moonY = vh * (0.10 + 0.36 * mEase);
       const moonVis = Math.max(0, 1 - Math.pow(tmix / 0.62, 1.8));
 
       const sRaw = Math.max(0, (tmix - 0.2) / 0.8);
       const sEase = 1 - Math.pow(1 - sRaw, 3);
-      const sunX = vw * (0.88 - 0.16 * sEase);
-      const sunY = worldHeight * (0.48 - 0.36 * sEase);
+      const sunX = vw * (0.86 - 0.16 * sEase);
+      const sunY = vh * (0.46 - 0.35 * sEase);
       const sunVis = Math.min(1, sRaw * 1.35);
 
       ctx.save();
@@ -428,9 +466,10 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       ctx.fillStyle = bgTop;
       ctx.fillRect(0, cameraY, vw, vh);
 
+      /* Upper-Pond Moonlight & Sunlight Atmospheric Glow (naturally dims as camera scrolls down) */
       if (moonVis > 0.01) {
         ctx.globalAlpha = moonVis;
-        const mg = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY + vh * 0.22, vh * 1.05);
+        const mg = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY + vh * 0.35, vh * 1.25);
         mg.addColorStop(0, "rgba(185, 220, 255, 0.26)");
         mg.addColorStop(0.42, "rgba(90, 140, 200, 0.07)");
         mg.addColorStop(1, "rgba(0, 0, 0, 0)");
@@ -440,7 +479,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       if (sunVis > 0.01) {
         const dawn = Math.sin(sEase * Math.PI);
         ctx.globalAlpha = sunVis;
-        const sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY + vh * 0.22, vh * 1.15);
+        const sg = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY + vh * 0.35, vh * 1.3);
         sg.addColorStop(0, dawn > 0.35 ? "rgba(255, 232, 175, 0.68)" : "rgba(255, 251, 228, 0.62)");
         sg.addColorStop(0.42, dawn > 0.35 ? "rgba(255, 215, 150, 0.22)" : "rgba(255, 246, 210, 0.16)");
         sg.addColorStop(1, "rgba(255, 255, 255, 0)");
@@ -448,6 +487,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         ctx.fillRect(0, cameraY, vw, vh);
       }
 
+      /* Submerged Pond Bed Rocks */
       ctx.fillStyle = rockColor;
       for (const r of rocks) {
         const bx = r.nx * vw, by = r.ny * worldHeight;
@@ -471,9 +511,12 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           }
         }
       }
+
+      /* Submerged Pond Weeds */
       ctx.fillStyle = weedColor; ctx.globalAlpha = 0.45;
       for (const w of weeds) {
         const bx = w.nx * vw, by = w.ny * worldHeight;
+        if (by < cameraY - 120 || by > cameraY + vh + 120) continue;
         for (let b = 0; b < 5; b++) {
           const len = 6 + (b % 3) * 2;
           for (let k = 0; k < len; k++) {
@@ -483,6 +526,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
+      /* Crescent Moon Reflection at Top of Pond */
       if (moonVis > 0.03) {
         const mr = 34;
         const x0 = Math.max(0, Math.floor((moonX - mr) / cw)), x1 = Math.min(cols - 1, Math.floor((moonX + mr) / cw));
@@ -507,6 +551,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
+      /* Sun Reflection at Top of Pond */
       if (sunVis > 0.03) {
         const sr = 42;
         const x0 = Math.max(0, Math.floor((sunX - sr * 1.4) / cw)), x1 = Math.min(cols - 1, Math.floor((sunX + sr * 1.4) / cw));
@@ -538,12 +583,24 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
+      /* Water Ripples + Moonlight/Sunlight Column (spreads wider and dims naturally down the pond) */
+      const depthScale = Math.max(vh, 720);
       for (let y = 0; y < rows; y++) {
         let r1 = "", r2 = "", r3 = "", h1 = false, h2 = false, h3 = false;
-        const py = cameraY + (y + 0.5) * chh, half = vw * (0.07 + (y / rows) * 0.12);
-        const swayY = Math.sin(y * 0.11 + time * 0.6) * 10;
+        const py = cameraY + (y + 0.5) * chh;
+        const swayY = Math.sin(py * 0.008 + time * 0.6) * 11;
         const moonColX = moonX + swayY;
         const sunColX = sunX + swayY;
+
+        const moonDepth = Math.max(0, py - moonY) / depthScale;
+        const moonSpread = vw * (0.055 + Math.pow(moonDepth, 0.88) * 0.22);
+        const moonAtten = Math.exp(-moonDepth * 0.68);
+        const belowMoon = py >= moonY - 12 ? 1 : Math.max(0, 1 - (moonY - py) / 40);
+
+        const sunDepth = Math.max(0, py - sunY) / depthScale;
+        const sunSpread = vw * (0.065 + Math.pow(sunDepth, 0.88) * 0.22);
+        const sunAtten = Math.exp(-sunDepth * 0.55);
+        const belowSun = py >= sunY - 12 ? 1 : Math.max(0, 1 - (sunY - py) / 40);
 
         for (let x = 0; x < cols; x++) {
           const px = (x + 0.5) * cw;
@@ -555,14 +612,12 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           const band = Math.max(0, Math.sin(px * 0.03 + py * 0.08 + time * 0.7) * Math.sin(py * 0.1 - time * 0.5));
           const m = Math.max(rd, band * 0.5);
 
-          const belowMoon = py >= moonY - 12 ? 1 : Math.max(0, 1 - (moonY - py) / 40);
-          const belowSun = py >= sunY - 12 ? 1 : Math.max(0, 1 - (sunY - py) / 40);
-          const gMoon = Math.exp(-(((px - moonColX) / half) ** 2)) * moonVis * belowMoon;
-          const gSun = Math.exp(-(((px - sunColX) / half) ** 2)) * sunVis * belowSun;
+          const gMoon = Math.exp(-(((px - moonColX) / moonSpread) ** 2)) * moonVis * belowMoon * moonAtten;
+          const gSun = Math.exp(-(((px - sunColX) / sunSpread) ** 2)) * sunVis * belowSun * sunAtten;
 
           const sp = Math.max(0, Math.sin(px * 0.9 + py * 0.7 + time * 3.1) * Math.sin(px * 0.37 - py * 1.3 - time * 2.3));
-          const nightI = m * (0.2 * (1 - tmix) + 0.9 * gMoon) + sp * sp * sp * gMoon * 0.65;
-          const dayI = m * (0.7 * tmix + 0.55 * gSun) + sp * sp * sp * gSun * 0.35;
+          const nightI = m * (0.18 * (1 - tmix) + 0.95 * gMoon) + sp * sp * sp * gMoon * 0.65;
+          const dayI = m * (0.68 * tmix + 0.58 * gSun) + sp * sp * sp * gSun * 0.35;
           const I = nightI + dayI;
 
           if (I > 0.6) { r3 += "+"; r2 += " "; r1 += " "; h3 = true; }
@@ -578,6 +633,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
+      /* Lily Pads */
       for (const pad of lilyPads) {
         const bx = pad.nx * vw, by = pad.ny * worldHeight;
         const bobY = Math.sin(time * 1.1 + pad.notch) * 1.5;
@@ -604,6 +660,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
+      /* Surface Ripples */
       ctx.strokeStyle = glintSoft;
       for (let i = ripples.length - 1; i >= 0; i--) {
         const r = ripples[i]; r.t += dt;
@@ -621,6 +678,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       val.fill(0); eyes.length = 0; shadowBlobs.length = 0;
       for (const k of kois) { step(k, dt); drawKoi(k); }
 
+      /* Koi Underwater Shadows */
       if (sh.length !== cols * rows) sh = new Float32Array(cols * rows); else sh.fill(0);
       const activeLx = (moonX * moonVis + sunX * sunVis) / Math.max(0.01, moonVis + sunVis);
       const activeElev = (1 - mEase) * moonVis + sEase * sunVis;
@@ -651,6 +709,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         if (has) ctx.fillText(row, 0, cameraY + y * chh);
       }
 
+      /* Koi Bodies */
       ctx.globalAlpha = 1;
       glowCtx.globalAlpha = 0.85;
       for (let y = 0; y < rows; y++) {
@@ -679,6 +738,8 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         ctx.fillStyle = bgTop; ctx.fillRect(ex, ey, cw, chh);
         ctx.fillStyle = eyeColor; ctx.fillText("o", ex, ey);
       }
+
+      /* Food Pellets & Sparks */
       for (let i = foods.length - 1; i >= 0; i--) {
         const f = foods[i]; f.age += dt;
         if (f.dead || f.age > 14) { foods.splice(i, 1); continue; }
@@ -705,6 +766,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         glowCtx.fillText(ch, sx, sy);
       }
 
+      /* Mossy Shoreline Stones & Pond-Edge Grass */
       for (const b of bankStones) {
         const bx = b.nx * vw, by = b.ny * worldHeight;
         const cx0 = Math.max(0, Math.floor((bx - b.rx * 1.2) / cw)), cx1 = Math.min(cols - 1, Math.floor((bx + b.rx * 1.2) / cw));
@@ -745,6 +807,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
+      /* Soft Phosphor Bloom */
       ctx.save();
       ctx.globalCompositeOperation = tmix < 0.5 ? "lighter" : "screen";
       ctx.filter = "blur(7px)";

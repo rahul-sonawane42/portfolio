@@ -7,6 +7,7 @@ import { profile, experience, projects, skills, education } from "./resumeData";
 export default function App() {
   const [theme, setTheme] = useState<Theme>("dark");
   const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
@@ -58,29 +59,26 @@ export default function App() {
       />
 
       <div className="pointer-events-none relative z-10 min-h-screen">
-
-        {/* Main Content — Full-Viewport-Width Arched Timber SteppingStones Spanning Bank to Bank */}
+        {/* Staggered Tobi-Ishi Stepping Stones Across the Koi Pond */}
         <main
           id="main-content"
-          className="flex w-full flex-col gap-32 pb-32 sm:gap-40"
+          className="flex w-full flex-col gap-28 pb-36 sm:gap-36"
         >
-          {/* Screen 1: Open Upper Water + Entrance SteppingStone Anchored in Lower Third */}
+          {/* Stone 1: Entrance Stepping Stone */}
           <section
             id="top"
             data-enter=""
-            className="flex min-h-[100svh] flex-col justify-between pb-6 pt-20"
+            className="flex min-h-[100svh] flex-col justify-between pb-6 pt-16"
           >
-            {/* Unboxed shoreline note tucked quietly in top-left margin */}
-            <div className="mx-auto w-full max-w-5xl px-5 sm:px-8">
+            <div className="mx-auto w-full max-w-4xl px-6 sm:px-8">
               <p className="select-none font-mono-tech text-[11px] text-[var(--muted)] opacity-75">
                 Click anywhere on the water to feed the koi
               </p>
             </div>
 
-            {/* Primary Entrance SteppingStone spanning edge-to-edge across the pond */}
-            <SteppingStone className="enter-1 mt-auto">
+            <SteppingStone variant={0} align="center" className="enter-1 mt-auto">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <p className="font-mono-tech text-xs font-medium text-[var(--kohaku)]">
+                <p className="font-mono-tech text-xs font-medium text-[var(--moss)]">
                   {profile.role}
                 </p>
                 <p className="font-mono-tech text-xs text-[var(--muted)]">
@@ -88,16 +86,16 @@ export default function App() {
                 </p>
               </div>
 
-              <h1 className="font-display mt-2.5 text-5xl leading-[1.02] text-[var(--fg)] sm:text-6xl">
+              <h1 className="font-display mt-2.5 text-5xl leading-[1.02] sm:text-6xl">
                 {profile.name}
               </h1>
 
-              <div className="enter-2 mt-6 grid grid-cols-1 items-end gap-6 border-t border-[var(--line)] pt-5 lg:grid-cols-12">
-                <p className="text-[15px] leading-7 text-[var(--fg-soft)] lg:col-span-6">
+              <div className="enter-2 stone-divider mt-6 grid grid-cols-1 items-end gap-6 border-t pt-5 lg:grid-cols-12">
+                <p className="text-[15px] leading-7 text-[var(--fg-soft)] lg:col-span-7">
                   {profile.bio}
                 </p>
 
-                <div className="flex flex-wrap gap-3 lg:col-span-6 lg:justify-end">
+                <div className="flex flex-wrap gap-2.5 lg:col-span-5 lg:justify-end">
                   <ActionLink href="#projects" main>
                     View projects
                   </ActionLink>
@@ -111,19 +109,21 @@ export default function App() {
             </SteppingStone>
           </section>
 
-          {/* Section 2: Experience SteppingStone — Full-Width Span */}
-          <section id="experience" className="pt-4">
-            <SteppingStone title="Experience and leadership">
+          {/* Stone 2: Experience & Leadership */}
+          <section id="experience" className="pt-2">
+            <SteppingStone
+              title="Experience and leadership"
+              variant={1}
+              align="left"
+            >
               <div className="divide-y divide-[var(--line)]">
                 {experience.map((r) => (
                   <article
                     key={r.title + r.org}
-                    className="py-6 first:pt-0 last:pb-0"
+                    className="stone-divider py-6 first:pt-0 last:pb-0"
                   >
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <h3 className="font-display text-2xl text-[var(--fg)]">
-                        {r.title}
-                      </h3>
+                      <h3 className="font-display text-2xl">{r.title}</h3>
                       <span className="font-mono-tech text-xs font-medium text-[var(--gold)]">
                         {r.period}
                       </span>
@@ -148,16 +148,20 @@ export default function App() {
             </SteppingStone>
           </section>
 
-          {/* Section 3: Projects SteppingStone — Full-Width Span */}
-          <section id="projects" className="pt-4">
-            <SteppingStone title="Featured projects">
+          {/* Stone 3: Featured Projects */}
+          <section id="projects" className="pt-2">
+            <SteppingStone
+              title="Featured projects"
+              variant={2}
+              align="right"
+            >
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 {projects.map((p, i) => (
                   <article
                     key={p.name}
                     className={`flex flex-col justify-between ${
                       i === 0
-                        ? "border-b border-[var(--line)] pb-8 md:col-span-2"
+                        ? "stone-divider border-b pb-8 md:col-span-2"
                         : ""
                     }`}
                   >
@@ -205,14 +209,18 @@ export default function App() {
             </SteppingStone>
           </section>
 
-          {/* Section 4: Technical Skills SteppingStone — Full-Width Span */}
-          <section id="skills" className="pt-4">
-            <SteppingStone title="Technical skills">
+          {/* Stone 4: Technical Skills */}
+          <section id="skills" className="pt-2">
+            <SteppingStone
+              title="Technical skills"
+              variant={3}
+              align="left"
+            >
               <div className="divide-y divide-[var(--line)]">
                 {Object.entries(skills).map(([group, items]) => (
                   <div
                     key={group}
-                    className="grid grid-cols-1 gap-3 py-5 first:pt-0 last:pb-0 sm:grid-cols-12 sm:items-center"
+                    className="stone-divider grid grid-cols-1 gap-3 py-5 first:pt-0 last:pb-0 sm:grid-cols-12 sm:items-center"
                   >
                     <h3 className="font-mono-tech text-xs font-medium text-[var(--moss)] sm:col-span-4">
                       {group}
@@ -230,10 +238,14 @@ export default function App() {
             </SteppingStone>
           </section>
 
-          {/* Section 5: Education & Contact SteppingStone — Full-Width Span */}
-          <section id="contact" className="pt-4">
-            <SteppingStone title="Education and contact">
-              <div className="grid grid-cols-1 gap-8 border-b border-[var(--line)] pb-8 md:grid-cols-2">
+          {/* Stone 5: Education & Contact */}
+          <section id="contact" className="pt-2">
+            <SteppingStone
+              title="Education and contact"
+              variant={4}
+              align="right"
+            >
+              <div className="stone-divider grid grid-cols-1 gap-8 border-b pb-8 md:grid-cols-2">
                 {education.map((e) => (
                   <div key={e.degree}>
                     <p className="font-mono-tech text-xs font-medium text-[var(--gold)]">
@@ -260,7 +272,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <div className="flex w-full flex-wrap gap-3 sm:w-auto">
+                <div className="flex w-full flex-wrap gap-2.5 sm:w-auto">
                   <button
                     type="button"
                     className="btn btn-main w-full sm:w-auto"
