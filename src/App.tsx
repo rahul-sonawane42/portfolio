@@ -88,13 +88,13 @@ export default function App() {
             <button
               type="button"
               onClick={() => setPondOnly(false)}
-              className="pointer-events-auto inline-flex min-h-11 cursor-pointer items-center gap-2.5 border-2 border-[var(--wood-mid)] bg-[var(--plank)] px-4 font-mono-tech text-xs text-[var(--fg)] transition-colors hover:border-[var(--kohaku)] hover:text-[var(--kohaku)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)]"
+              className="pond-control pointer-events-auto inline-flex min-h-11 cursor-pointer items-center gap-2.5 px-4 font-mono-tech text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)]"
             >
               <span
                 aria-hidden="true"
                 className="h-1.5 w-1.5 rotate-45 bg-[var(--kohaku)]"
               />
-              <span>Show bridges</span>
+              <span>Show interface</span>
             </button>
 
             <ThemeToggle
@@ -111,23 +111,23 @@ export default function App() {
         }`}
         aria-hidden={pondOnly}
       >
-        {/* Top Garden Overlook Walkway */}
-        <header className="walkway-nav pointer-events-auto fixed inset-x-0 top-0 z-20">
-          <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-5 py-2 sm:px-8">
+        <header className="pond-header pointer-events-none fixed inset-x-0 top-0 z-20">
+          <div className="pond-nav-slab pointer-events-auto mx-auto flex items-center justify-center gap-2 sm:gap-3">
             <a
               href="#top"
-              className="inline-flex min-h-11 items-center font-display text-2xl text-[var(--fg)] transition-colors hover:text-[var(--kohaku)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)]"
+              aria-label="Rahul Sonawane, back to top"
+              className="stone-monogram hidden sm:inline-flex"
             >
-              Rahul Sonawane
+              RS
             </a>
 
-            <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
+            <nav aria-label="Primary" className="flex items-center gap-0 sm:gap-1">
               {navItems.map((item) => (
                 <a
                   key={item.id}
                   href={item.href}
                   data-active={activeSection === item.id}
-                  className={`nav-link font-mono-tech text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)] ${
+                  className={`nav-link font-mono-tech text-[10px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)] sm:text-xs ${
                     activeSection === item.id
                       ? "font-semibold text-[var(--fg)]"
                       : "text-[var(--muted)] hover:text-[var(--fg)]"
@@ -138,16 +138,15 @@ export default function App() {
               ))}
             </nav>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setPondOnly(true)}
-                className="pointer-events-auto hidden min-h-11 cursor-pointer items-center border-2 border-[var(--wood-mid)] bg-[var(--tag-bg)] px-3 font-mono-tech text-[11px] font-medium text-[var(--muted)] transition-colors hover:border-[var(--moss)] hover:text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)] sm:inline-flex"
-                title="Hide footbridges to watch the koi pond"
+                className="pond-control hidden min-h-9 cursor-pointer items-center px-2.5 font-mono-tech text-[10px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)] sm:inline-flex"
+                title="Hide interface to watch the koi pond"
               >
                 Pond
               </button>
-
               <ThemeToggle
                 theme={theme}
                 onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
