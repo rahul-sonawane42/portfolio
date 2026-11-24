@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import KoiPondCanvas from "./components/KoiPondCanvas";
-import Footbridge from "./components/Footbridge";
+import SteppingStone from "./components/SteppingStone";
+import ZenSandScrollbar from "./components/ZenSandScrollbar";
 import ThemeToggle, { type Theme } from "./components/ThemeToggle";
 import { profile, experience, projects, skills, education } from "./resumeData";
 
@@ -78,6 +79,7 @@ export default function App() {
       </a>
 
       <KoiPondCanvas theme={theme} />
+      <ZenSandScrollbar hidden={pondOnly} />
 
       {/* Floating Restore Control when viewing unobstructed garden pond */}
       {pondOnly && (
@@ -154,12 +156,12 @@ export default function App() {
           </div>
         </header>
 
-        {/* Main Content — Full-Viewport-Width Arched Timber Footbridges Spanning Bank to Bank */}
+        {/* Main Content — Full-Viewport-Width Arched Timber SteppingStones Spanning Bank to Bank */}
         <main
           id="main-content"
           className="flex w-full flex-col gap-36 pb-32"
         >
-          {/* Screen 1: Open Upper Water + Entrance Footbridge Anchored in Lower Third */}
+          {/* Screen 1: Open Upper Water + Entrance SteppingStone Anchored in Lower Third */}
           <section
             id="top"
             data-enter=""
@@ -172,8 +174,8 @@ export default function App() {
               </p>
             </div>
 
-            {/* Primary Entrance Footbridge spanning edge-to-edge across the pond */}
-            <Footbridge className="enter-1 mt-auto">
+            {/* Primary Entrance SteppingStone spanning edge-to-edge across the pond */}
+            <SteppingStone className="enter-1 mt-auto">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="font-mono-tech text-xs font-medium text-[var(--kohaku)]">
                   {profile.role}
@@ -203,12 +205,12 @@ export default function App() {
                   )}
                 </div>
               </div>
-            </Footbridge>
+            </SteppingStone>
           </section>
 
-          {/* Section 2: Experience Footbridge — Full-Width Span */}
+          {/* Section 2: Experience SteppingStone — Full-Width Span */}
           <section id="experience" className="pt-4">
-            <Footbridge title="Experience and leadership">
+            <SteppingStone title="Experience and leadership">
               <div className="divide-y divide-[var(--line)]">
                 {experience.map((r) => (
                   <article
@@ -240,12 +242,12 @@ export default function App() {
                   </article>
                 ))}
               </div>
-            </Footbridge>
+            </SteppingStone>
           </section>
 
-          {/* Section 3: Projects Footbridge — Full-Width Span */}
+          {/* Section 3: Projects SteppingStone — Full-Width Span */}
           <section id="projects" className="pt-4">
-            <Footbridge title="Featured projects">
+            <SteppingStone title="Featured projects">
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 {projects.map((p, i) => (
                   <article
@@ -297,12 +299,12 @@ export default function App() {
                   </article>
                 ))}
               </div>
-            </Footbridge>
+            </SteppingStone>
           </section>
 
-          {/* Section 4: Technical Skills Footbridge — Full-Width Span */}
+          {/* Section 4: Technical Skills SteppingStone — Full-Width Span */}
           <section id="skills" className="pt-4">
-            <Footbridge title="Technical skills">
+            <SteppingStone title="Technical skills">
               <div className="divide-y divide-[var(--line)]">
                 {Object.entries(skills).map(([group, items]) => (
                   <div
@@ -322,12 +324,12 @@ export default function App() {
                   </div>
                 ))}
               </div>
-            </Footbridge>
+            </SteppingStone>
           </section>
 
-          {/* Section 5: Education & Contact Footbridge — Full-Width Span */}
+          {/* Section 5: Education & Contact SteppingStone — Full-Width Span */}
           <section id="contact" className="pt-4">
-            <Footbridge title="Education and contact">
+            <SteppingStone title="Education and contact">
               <div className="grid grid-cols-1 gap-8 border-b border-[var(--line)] pb-8 md:grid-cols-2">
                 {education.map((e) => (
                   <div key={e.degree}>
@@ -369,7 +371,7 @@ export default function App() {
                   )}
                 </div>
               </footer>
-            </Footbridge>
+            </SteppingStone>
           </section>
         </main>
       </div>
