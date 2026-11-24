@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import KoiPondCanvas from "./components/KoiPondCanvas";
 import SteppingStone from "./components/SteppingStone";
 import ThemeToggle, { type Theme } from "./components/ThemeToggle";
@@ -76,7 +77,12 @@ export default function App() {
               </p>
             </div>
 
-            <SteppingStone variant={0} align="center" className="enter-1 mt-auto">
+            <SteppingStone
+              theme={theme}
+              variant={0}
+              align="center"
+              className="enter-1 mt-auto"
+            >
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="font-mono-tech text-xs font-medium text-[var(--moss)]">
                   {profile.role}
@@ -90,12 +96,12 @@ export default function App() {
                 {profile.name}
               </h1>
 
-              <div className="enter-2 stone-divider mt-6 grid grid-cols-1 items-end gap-6 border-t pt-5 lg:grid-cols-12">
-                <p className="text-[15px] leading-7 text-[var(--fg-soft)] lg:col-span-7">
+              <div className="enter-2 stone-divider mt-6 border-t pt-5">
+                <p className="max-w-2xl text-[15px] leading-7 text-[var(--fg-soft)]">
                   {profile.bio}
                 </p>
 
-                <div className="flex flex-wrap gap-2.5 lg:col-span-5 lg:justify-end">
+                <div className="mt-6 flex flex-wrap items-center gap-3">
                   <ActionLink href="#projects" main>
                     View projects
                   </ActionLink>
@@ -112,6 +118,7 @@ export default function App() {
           {/* Stone 2: Experience & Leadership */}
           <section id="experience" className="pt-2">
             <SteppingStone
+              theme={theme}
               title="Experience and leadership"
               variant={1}
               align="left"
@@ -151,6 +158,7 @@ export default function App() {
           {/* Stone 3: Featured Projects */}
           <section id="projects" className="pt-2">
             <SteppingStone
+              theme={theme}
               title="Featured projects"
               variant={2}
               align="right"
@@ -212,6 +220,7 @@ export default function App() {
           {/* Stone 4: Technical Skills */}
           <section id="skills" className="pt-2">
             <SteppingStone
+              theme={theme}
               title="Technical skills"
               variant={3}
               align="left"
@@ -241,6 +250,7 @@ export default function App() {
           {/* Stone 5: Education & Contact */}
           <section id="contact" className="pt-2">
             <SteppingStone
+              theme={theme}
               title="Education and contact"
               variant={4}
               align="right"
@@ -272,7 +282,7 @@ export default function App() {
                   </p>
                 </div>
 
-                <div className="flex w-full flex-wrap gap-2.5 sm:w-auto">
+                <div className="flex w-full flex-wrap gap-3 sm:w-auto">
                   <button
                     type="button"
                     className="btn btn-main w-full sm:w-auto"

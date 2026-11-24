@@ -1,5 +1,6 @@
-import { useId } from "react";
+import { useEffect, useRef } from "react";
 import type { ReactNode } from "react";
+import type { Theme } from "./ThemeToggle";
 
 interface SteppingStoneProps {
   children: ReactNode;
@@ -9,16 +10,77 @@ interface SteppingStoneProps {
   subtitle?: string;
   variant?: 0 | 1 | 2 | 3 | 4;
   align?: "center" | "left" | "right";
+  theme?: Theme;
 }
 
-/* Five distinct asymmetric river-worn flat boulder (tobi-ishi) contours */
-const STONE_SHAPES: string[] = [
-  "M 56 38 C 190 16, 420 12, 690 18 C 845 22, 938 30, 964 56 C 986 82, 988 875, 966 914 C 942 948, 815 964, 540 966 C 275 968, 86 956, 46 924 C 16 896, 18 92, 42 56 C 47 46, 50 40, 56 38 Z",
-  "M 44 46 C 165 20, 495 14, 745 22 C 885 26, 948 40, 970 68 C 988 94, 982 882, 954 918 C 924 952, 760 966, 480 964 C 225 962, 76 950, 38 914 C 14 888, 22 96, 44 46 Z",
-  "M 62 34 C 240 16, 540 18, 795 24 C 905 28, 956 44, 974 74 C 990 105, 984 876, 958 916 C 930 950, 790 964, 515 966 C 245 968, 82 952, 44 918 C 16 890, 20 88, 48 50 C 53 42, 57 36, 62 34 Z",
-  "M 48 42 C 210 18, 465 14, 725 20 C 870 24, 946 36, 968 64 C 988 92, 986 886, 960 920 C 932 952, 775 966, 495 966 C 235 966, 78 952, 40 916 C 14 890, 18 94, 48 42 Z",
-  "M 54 36 C 220 16, 510 14, 765 22 C 895 26, 952 40, 972 68 C 990 96, 984 880, 956 916 C 928 950, 780 965, 505 966 C 240 967, 80 952, 42 918 C 15 890, 20 90, 46 52 Z",
-];
+interface Pt {
+  x: number;
+  y: number;
+}
+
+function mulberry32(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function buildBoulderPolygon(
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  variant: number
+): Pt[] {
+  const rand = mulberry32(4109 + variant * 977);
+  const steps = 36;
+  const p = 3.1; // Flat-topped river boulder superellipse exponent
+  const phases = [
+    rand() * Math.PI * 2,
+    rand() * Math.PI * 2,
+    rand() * Math.PI * 2,
+  ];
+  const pts: Pt[] = [];
+
+  for (let i = 0; i < steps; i++) {
+    const theta = (i / steps) * Math.PI * 2;
+    const cosT = Math.cos(theta);
+    const sinT = Math.sin(theta);
+
+    // Superellipse base contour (flat horizontal top/bottom, rounded-faceted sides)
+    const sx = Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / p);
+    const sy = Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / p);
+
+    // Organic hand-quarried stone cleavage facets
+    const facet =
+      1 +
+      0.022 * Math.sin(3 * theta + phases[0]) +
+      0.015 * Math.cos(5 * theta + phases[1]) +
+      0.009 * Math.sin(9 * theta + phases[2]) +
+      (rand() - 0.5) * 0.008;
+
+    pts.push({
+      x: cx + sx * rx * facet,
+      y: cy + sy * ry * facet,
+    });
+  }
+  return pts;
+}
+
+function tracePoly(ctx: CanvasRenderingContext2D, pts: Pt[], ox = 0, oy = 0, scale = 1, cx = 0, cy = 0) {
+  ctx.beginPath();
+  for (let i = 0; i < pts.length; i++) {
+    const px = cx + (pts[i].x - cx) * scale + ox;
+    const py = cy + (pts[i].y - cy) * scale + oy;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
 
 export default function SteppingStone({
   children,
@@ -28,9 +90,219 @@ export default function SteppingStone({
   subtitle,
   variant = 0,
   align = "center",
+  theme = "dark",
 }: SteppingStoneProps) {
-  const uid = useId().replace(/:/g, "");
-  const path = STONE_SHAPES[variant % STONE_SHAPES.length];
+  const articleRef = useRef<HTMLElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const article = articleRef.current;
+    const canvas = canvasRef.current;
+    if (!article || !canvas) return;
+
+    const padX = 28;
+    const padTop = 20;
+    const padBottom = 38;
+
+    const renderStone = () => {
+      const w = article.offsetWidth;
+      const h = article.offsetHeight;
+      if (w <= 0 || h <= 0) return;
+
+      const cw = w + padX * 2;
+      const ch = h + padTop + padBottom;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+      canvas.width = Math.round(cw * dpr);
+      canvas.height = Math.round(ch * dpr);
+      canvas.style.width = `${cw}px`;
+      canvas.style.height = `${ch}px`;
+      canvas.style.left = `${-padX}px`;
+      canvas.style.top = `${-padTop}px`;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, cw, ch);
+
+      const isLight = theme === "light";
+      const cx = cw / 2;
+      const cy = padTop + h / 2;
+      const rx = w / 2 + 6;
+      const ry = h / 2 + 4;
+      const pts = buildBoulderPolygon(cx, cy, rx, ry, variant);
+
+      // 1. Concentric Water Meniscus Ripples Around Submerged Stone
+      ctx.save();
+      for (const [scale, alpha] of [
+        [1.032, isLight ? 0.42 : 0.24],
+        [1.016, isLight ? 0.62 : 0.36],
+      ] as const) {
+        tracePoly(ctx, pts, 0, 12, scale, cx, cy);
+        ctx.strokeStyle = isLight
+          ? `rgba(255, 255, 255, ${alpha})`
+          : `rgba(148, 192, 224, ${alpha})`;
+        ctx.lineWidth = 1.25;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 2. Soft Underwater Pond Shadow
+      ctx.save();
+      ctx.shadowColor = isLight
+        ? "rgba(24, 58, 74, 0.36)"
+        : "rgba(0, 0, 0, 0.85)";
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 10;
+      tracePoly(ctx, pts, 0, 18);
+      ctx.fillStyle = isLight ? "rgba(32, 68, 84, 0.35)" : "rgba(0, 0, 0, 0.75)";
+      ctx.fill();
+      ctx.restore();
+
+      // 3. Wet Darkened Waterline Base Collar (Submerged Rim)
+      tracePoly(ctx, pts, 0, 22, 1.006, cx, cy);
+      ctx.fillStyle = isLight ? "#556466" : "#080b0e";
+      ctx.fill();
+
+      // 4. Chiseled 3D Vertical Rock Thickness / Side Wall (16px height)
+      const sideGrad = ctx.createLinearGradient(0, 0, cw, 0);
+      if (isLight) {
+        sideGrad.addColorStop(0, "#8f8a7f");
+        sideGrad.addColorStop(0.28, "#b2ada2");
+        sideGrad.addColorStop(0.72, "#878278");
+        sideGrad.addColorStop(1, "#69655c");
+      } else {
+        sideGrad.addColorStop(0, "#191e23");
+        sideGrad.addColorStop(0.28, "#282f36");
+        sideGrad.addColorStop(0.72, "#171b20");
+        sideGrad.addColorStop(1, "#0e1114");
+      }
+
+      for (let dy = 16; dy >= 2; dy -= 2) {
+        tracePoly(ctx, pts, 0, dy);
+        ctx.fillStyle = sideGrad;
+        ctx.fill();
+      }
+
+      // Vertical Cleavage Facets on the Front Rock Side-Wall
+      ctx.save();
+      tracePoly(ctx, pts, 0, 16);
+      ctx.clip();
+      const randCleavage = mulberry32(9001 + variant * 313);
+      for (let x = padX; x < cw - padX; x += 22 + randCleavage() * 24) {
+        ctx.beginPath();
+        ctx.moveTo(x, cy + ry - 26);
+        ctx.lineTo(x + (randCleavage() - 0.5) * 6, cy + ry + 20);
+        ctx.strokeStyle =
+          randCleavage() > 0.45
+            ? isLight
+              ? "rgba(45, 42, 36, 0.28)"
+              : "rgba(0, 0, 0, 0.55)"
+            : isLight
+              ? "rgba(255, 255, 255, 0.35)"
+              : "rgba(210, 224, 238, 0.12)";
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 5. Flat Opaque Top River-Granite Face
+      const topGrad = ctx.createLinearGradient(padX, padTop, cw - padX, ch - padBottom);
+      if (isLight) {
+        // Warm sunlit Shirakawa granite
+        topGrad.addColorStop(0, "#eae6dd");
+        topGrad.addColorStop(0.45, "#dfdbd1");
+        topGrad.addColorStop(1, "#cec9be");
+      } else {
+        // Moonlit cool river basalt/granite (visible mineral tone, not pitch black)
+        topGrad.addColorStop(0, "#31373e");
+        topGrad.addColorStop(0.48, "#262b31");
+        topGrad.addColorStop(1, "#1c2025");
+      }
+
+      tracePoly(ctx, pts, 0, 0);
+      ctx.fillStyle = topGrad;
+      ctx.fill();
+
+      // 6. Tactile Mineral Grain, Quartz Flecks, Biotite Specks & Hairline Veins
+      ctx.save();
+      tracePoly(ctx, pts, 0, 0);
+      ctx.clip();
+
+      const rand = mulberry32(7717 + variant * 521);
+      const area = w * h;
+      const speckCount = Math.min(4800, Math.floor(area * 0.014));
+
+      for (let i = 0; i < speckCount; i++) {
+        const sx = padX + rand() * w;
+        const sy = padTop + rand() * h;
+        const size = 0.8 + rand() * 1.6;
+        const kind = rand();
+
+        if (kind < 0.46) {
+          // Dark biotite / mica mineral grain
+          ctx.fillStyle = isLight
+            ? `rgba(52, 48, 42, ${0.06 + rand() * 0.11})`
+            : `rgba(8, 10, 13, ${0.18 + rand() * 0.24})`;
+        } else if (kind < 0.88) {
+          // Pale quartz / feldspar mineral fleck
+          ctx.fillStyle = isLight
+            ? `rgba(255, 255, 255, ${0.18 + rand() * 0.28})`
+            : `rgba(195, 208, 222, ${0.05 + rand() * 0.09})`;
+        } else {
+          // Warm iron/ochre mineral tint
+          ctx.fillStyle = isLight
+            ? `rgba(148, 128, 98, ${0.07 + rand() * 0.08})`
+            : `rgba(140, 124, 102, ${0.04 + rand() * 0.05})`;
+        }
+        ctx.fillRect(sx, sy, size, size);
+      }
+
+      // Subtle Natural Quartz / Mineral Veins
+      const veinCount = 3;
+      for (let v = 0; v < veinCount; v++) {
+        let vx = padX + (0.15 + rand() * 0.7) * w;
+        let vy = padTop + rand() * h;
+        let angle = (rand() - 0.5) * 1.2;
+        ctx.beginPath();
+        ctx.moveTo(vx, vy);
+        for (let step = 0; step < 14; step++) {
+          angle += (rand() - 0.5) * 0.45;
+          vx += Math.cos(angle) * (w / 14);
+          vy += Math.sin(angle) * 12;
+          ctx.lineTo(vx, vy);
+        }
+        ctx.strokeStyle = isLight
+          ? "rgba(255, 255, 255, 0.28)"
+          : "rgba(180, 196, 214, 0.07)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+
+      // Subtle Hand-Dressed Inner Mason Frame (Tobi-ishi border relief)
+      tracePoly(ctx, pts, 0, 0, 0.968, cx, cy);
+      ctx.strokeStyle = isLight
+        ? "rgba(48, 44, 38, 0.14)"
+        : "rgba(0, 0, 0, 0.35)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // 7. Chiseled Top Rim Bevel Highlight & Lower Edge Shadow
+      tracePoly(ctx, pts, 0, 0);
+      ctx.strokeStyle = isLight
+        ? "rgba(255, 255, 255, 0.85)"
+        : "rgba(215, 228, 242, 0.26)";
+      ctx.lineWidth = 1.75;
+      ctx.stroke();
+    };
+
+    renderStone();
+    const ro = new ResizeObserver(renderStone);
+    ro.observe(article);
+    return () => ro.disconnect();
+  }, [theme, variant]);
 
   const alignClass =
     align === "left"
@@ -41,101 +313,16 @@ export default function SteppingStone({
 
   return (
     <article
+      ref={articleRef}
       id={id}
       data-stepping-stone
       className={`stepping-stone pointer-events-auto ${alignClass} ${className}`}
     >
-      {/* Multi-Layered Organic River Boulder & Water Meniscus */}
-      <svg
+      <canvas
+        ref={canvasRef}
         aria-hidden="true"
-        viewBox="0 0 1000 1000"
-        preserveAspectRatio="none"
-        className="stone-slab-svg"
-      >
-        <defs>
-          <linearGradient id={`top-${uid}`} x1="0.12" y1="0" x2="0.88" y2="1">
-            <stop offset="0%" stopColor="var(--stone-top-hi)" />
-            <stop offset="48%" stopColor="var(--stone-top)" />
-            <stop offset="100%" stopColor="var(--stone-top-lo)" />
-          </linearGradient>
-
-          <linearGradient id={`side-${uid}`} x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="var(--stone-side)" />
-            <stop offset="32%" stopColor="var(--stone-side-hi)" />
-            <stop offset="78%" stopColor="var(--stone-side)" />
-            <stop offset="100%" stopColor="var(--stone-wet)" />
-          </linearGradient>
-
-          <filter id={`grain-${uid}`} x="0%" y="0%" width="100%" height="100%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.72"
-              numOctaves="3"
-              seed={11 + variant * 7}
-              result="noise"
-            />
-            <feColorMatrix
-              type="matrix"
-              values="0.35 0 0 0 0.25  0 0.35 0 0 0.25  0 0 0.35 0 0.25  0 0 0 0.16 0"
-            />
-          </filter>
-
-          <clipPath id={`clip-${uid}`}>
-            <path d={path} />
-          </clipPath>
-        </defs>
-
-        {/* Subtle Water Meniscus Ripple Around Submerged Stone */}
-        <path
-          d={path}
-          transform="translate(0, 10) scale(1.018)"
-          fill="none"
-          stroke="var(--waterline)"
-          strokeWidth="1.5"
-          className="stone-ripple-ring"
-        />
-
-        {/* Underwater Soft Drop Shadow */}
-        <path
-          d={path}
-          transform="translate(0, 26)"
-          fill="rgba(0, 0, 0, 0.42)"
-        />
-
-        {/* Submerged Wet Waterline Base Collar */}
-        <path
-          d={path}
-          transform="translate(0, 20)"
-          fill="var(--stone-wet)"
-        />
-
-        {/* Chiseled Vertical Rock Thickness / Side Wall */}
-        <path
-          d={path}
-          transform="translate(0, 14)"
-          fill={`url(#side-${uid})`}
-          stroke="var(--stone-wet)"
-          strokeWidth="2"
-        />
-
-        {/* Flat Opaque Top Stone Face */}
-        <path
-          d={path}
-          fill={`url(#top-${uid})`}
-          stroke="var(--stone-rim)"
-          strokeWidth="2.2"
-        />
-
-        {/* Natural Mineral Grain Overlay Clipped to Stone Top */}
-        <rect
-          x="0"
-          y="0"
-          width="1000"
-          height="1000"
-          clipPath={`url(#clip-${uid})`}
-          filter={`url(#grain-${uid})`}
-        />
-      </svg>
+        className="stone-surface-canvas"
+      />
 
       {/* Engraved / Chiseled Content */}
       <div className="stone-content">

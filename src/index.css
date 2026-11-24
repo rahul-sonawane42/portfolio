@@ -6,78 +6,60 @@
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 }
 
-/* Night Zen Garden: Moonlit Basalt Stones & Quiet Black Water */
+/* Night Zen Garden: Moonlit River Basalt & Quiet Black Pond */
 :root[data-theme="dark"] {
   --bg: #000000;
-  --fg: #e8e3d9;
-  --fg-soft: #c2bcb0;
-  --muted: #8f8a80;
+  --fg: #ebe6dc;
+  --fg-soft: #cac4b8;
+  --muted: #969084;
 
-  /* Stone Material Tokens */
-  --stone-top-hi: #272c31;
-  --stone-top: #1d2125;
-  --stone-top-lo: #16191d;
-  --stone-rim: rgba(214, 224, 235, 0.22);
-  --stone-side-hi: #191d21;
-  --stone-side: #0f1215;
-  --stone-wet: #06080a;
-  --waterline: rgba(152, 194, 224, 0.42);
-
-  /* Chiseled Typography & Garden Accents */
-  --carved-heading: #ebe6dc;
-  --carved-top-shadow: rgba(0, 0, 0, 0.95);
+  /* Chiseled Typography & Carved Groove Rules */
+  --carved-heading: #f0ece3;
+  --carved-top-shadow: rgba(0, 0, 0, 0.96);
   --carved-bot-glint: rgba(255, 255, 255, 0.14);
-  --line: rgba(0, 0, 0, 0.78);
-  --line-glint: rgba(255, 255, 255, 0.09);
+  --line: rgba(8, 10, 12, 0.85);
+  --line-glint: rgba(255, 255, 255, 0.1);
 
   --kohaku: #d9532f;
-  --kohaku-fg: #faf6f0;
-  --moss: #74a382;
-  --gold: #cfa35c;
+  --kohaku-fg: #fbf7f0;
+  --moss: #7fb08e;
+  --gold: #d6aa63;
 
-  /* Hanko Stamp & Recessed Stone Plaques */
-  --hanko: #b8371c;
-  --hanko-hover: #cc4022;
-  --hanko-border: rgba(244, 152, 126, 0.45);
-  --plaque-bg: #14171a;
-  --plaque-border: rgba(255, 255, 255, 0.11);
+  /* Cinnabar Hanko Seal & Chiseled Stone Inlay Buttons */
+  --hanko: #b5361b;
+  --hanko-hover: #c93f22;
+  --hanko-border: rgba(246, 165, 140, 0.5);
+  --plaque-bg: rgba(16, 19, 22, 0.82);
+  --plaque-hover: rgba(24, 29, 34, 0.92);
+  --plaque-border: rgba(255, 255, 255, 0.14);
 }
 
 /* Day Zen Garden: Sunlit Shirakawa Granite & Celadon Pond */
 :root[data-theme="light"] {
   --bg: #a9d3e2;
-  --fg: #1d1b18;
-  --fg-soft: #35312b;
-  --muted: #615b52;
+  --fg: #1c1a17;
+  --fg-soft: #332f29;
+  --muted: #5c564d;
 
-  /* Stone Material Tokens */
-  --stone-top-hi: #eeeae1;
-  --stone-top: #e3dfd6;
-  --stone-top-lo: #d4cfc4;
-  --stone-rim: rgba(255, 255, 255, 0.92);
-  --stone-side-hi: #b5b0a5;
-  --stone-side: #8f8a80;
-  --stone-wet: #586466;
-  --waterline: rgba(255, 255, 255, 0.65);
-
-  /* Chiseled Typography & Garden Accents */
-  --carved-heading: #1c1a17;
-  --carved-top-shadow: rgba(0, 0, 0, 0.22);
+  /* Chiseled Typography & Carved Groove Rules */
+  --carved-heading: #191714;
+  --carved-top-shadow: rgba(0, 0, 0, 0.24);
   --carved-bot-glint: rgba(255, 255, 255, 0.88);
-  --line: rgba(42, 38, 32, 0.24);
-  --line-glint: rgba(255, 255, 255, 0.75);
+  --line: rgba(38, 34, 28, 0.28);
+  --line-glint: rgba(255, 255, 255, 0.78);
 
   --kohaku: #b5381e;
   --kohaku-fg: #fffaf3;
-  --moss: #2d6342;
-  --gold: #8c5d23;
+  --moss: #2b6140;
+  --gold: #8a5b21;
 
-  /* Hanko Stamp & Recessed Stone Plaques */
+  /* Cinnabar Hanko Seal & Chiseled Stone Inlay Buttons */
   --hanko: #b5381e;
   --hanko-hover: #c74124;
-  --hanko-border: rgba(255, 224, 214, 0.55);
-  --plaque-bg: #d7d2c7;
-  --plaque-border: rgba(36, 33, 28, 0.2);
+  --hanko-border: rgba(255, 232, 222, 0.6);
+  --plaque-bg: rgba(196, 191, 181, 0.72);
+  --plaque-hover: rgba(184, 178, 167, 0.88);
+  --plaque-border: rgba(36, 33, 28, 0.24);
 }
 
 html {
@@ -128,46 +110,24 @@ body {
 .stepping-stone {
   position: relative;
   isolation: isolate;
-  width: min(calc(100% - 2.25rem), 49rem);
+  width: min(calc(100% - 2rem), 48rem);
   margin-inline: auto;
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @media (min-width: 768px) {
   .stone-shift-left {
-    transform: translateX(-3.25%);
+    transform: translateX(-3%);
   }
   .stone-shift-right {
-    transform: translateX(3.25%);
+    transform: translateX(3%);
   }
 }
 
-.stone-slab-svg {
+.stone-surface-canvas {
   position: absolute;
-  inset: -14px -18px -26px -18px;
-  width: calc(100% + 36px);
-  height: calc(100% + 40px);
-  z-index: 0;
   pointer-events: none;
-  overflow: visible;
-}
-
-.stone-ripple-ring {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: stone-meniscus 7.5s ease-in-out infinite;
-}
-
-@keyframes stone-meniscus {
-  0%,
-  100% {
-    opacity: 0.28;
-    transform: scale(0.994);
-  }
-  50% {
-    opacity: 0.62;
-    transform: scale(1.012);
-  }
+  z-index: 0;
 }
 
 .stone-content {
@@ -178,7 +138,7 @@ body {
 
 @media (min-width: 640px) {
   .stone-content {
-    padding: 3.25rem 3.75rem 3.5rem;
+    padding: 3.15rem 3.5rem 3.35rem;
   }
 }
 
@@ -226,7 +186,7 @@ body {
   box-shadow: 0 1px 0 var(--line-glint);
 }
 
-/* Smooth River-Pebble Skill Chips */
+/* Carved Pebble Skill Chips */
 .tag {
   display: inline-flex;
   align-items: center;
@@ -248,24 +208,25 @@ body {
   color: var(--fg);
 }
 
-/* Recessed Stone Plaque & Cinnabar Hanko Seal Buttons */
+/* Chiseled Stone-Inlay Buttons & Cinnabar Hanko Seal */
 .btn {
   display: inline-flex;
-  min-height: 44px;
+  min-height: 42px;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
   padding: 0 18px;
   border: 1px solid var(--plaque-border);
-  border-radius: 4px;
+  border-radius: 3px;
   background: var(--plaque-bg);
   box-shadow:
-    inset 0 1.5px 3px rgba(0, 0, 0, 0.45),
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.42),
     0 1px 0 var(--line-glint);
   color: var(--fg);
   font-family: var(--font-mono);
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 500;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition:
     transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
@@ -275,8 +236,9 @@ body {
 }
 
 .btn:hover {
+  background: var(--plaque-hover);
   border-color: var(--moss);
-  transform: translateY(-2px);
+  transform: translateY(-1.5px);
 }
 
 .btn:active {
@@ -288,16 +250,15 @@ body {
   outline-offset: 2px;
 }
 
-/* Traditional Carved Cinnabar Hanko Seal CTA */
 .btn-main {
   border-color: var(--hanko-border);
   background: var(--hanko);
   box-shadow:
-    inset 0 0 0 1.5px rgba(255, 245, 235, 0.2),
-    inset 0 2px 4px rgba(55, 10, 2, 0.5),
-    0 3px 10px rgba(0, 0, 0, 0.28);
+    inset 0 0 0 1.5px rgba(255, 245, 235, 0.22),
+    inset 0 2px 4px rgba(55, 10, 2, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.26);
   color: var(--kohaku-fg);
-  text-shadow: 0 1px 1px rgba(45, 8, 2, 0.55);
+  text-shadow: 0 1px 1px rgba(45, 8, 2, 0.5);
   font-weight: 600;
 }
 
@@ -305,7 +266,7 @@ body {
   background: var(--hanko-hover);
   border-color: var(--hanko-border);
   color: var(--kohaku-fg);
-  transform: translateY(-2px);
+  transform: translateY(-1.5px);
 }
 
 /* Once-on-Load Hero Entrance */
@@ -338,9 +299,6 @@ body {
   .stepping-stone,
   .theme-slider-thumb {
     transition: none;
-  }
-  .stone-ripple-ring {
-    animation: none;
   }
   [data-enter] .enter-1,
   [data-enter] .enter-2 {

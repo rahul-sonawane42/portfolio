@@ -56,11 +56,12 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
     const glowCanvas = document.createElement("canvas");
     const glowCtx = glowCanvas.getContext("2d")!;
     const bloomScale = 0.25;
+    const overscan = 160; // Vertical buffer so synchronous compositor scroll transform never clips
 
     const fs = 13;
-    let cw = 8, chh = 15, cols = 0, rows = 0, vw = 0, vh = 0;
+    let cw = 8, chh = 15, cols = 0, rows = 0, vw = 0, vh = 0, bufH = 0;
     let worldHeight = Math.max(window.innerHeight, document.documentElement.scrollHeight);
-    let cameraY = window.scrollY;
+    let renderedCameraY = window.scrollY;
     let val = new Float32Array(0), col = new Uint8Array(0);
     const mouse = { x: -9999, y: -9999 };
     const steppingStones: { x: number; y: number; rx: number; ry: number }[] = [];
@@ -69,22 +70,31 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      vw = window.innerWidth; vh = window.innerHeight;
-      canvas.width = vw * dpr; canvas.height = vh * dpr;
-      canvas.style.width = vw + "px"; canvas.style.height = vh + "px";
+      vw = window.innerWidth;
+      vh = window.innerHeight;
+      bufH = vh + overscan * 2;
+
+      canvas.width = vw * dpr;
+      canvas.height = bufH * dpr;
+      canvas.style.width = vw + "px";
+      canvas.style.height = bufH + "px";
+      canvas.style.top = -overscan + "px";
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.font = `600 ${fs}px "JetBrains Mono", ui-monospace, Menlo, monospace`;
       ctx.textBaseline = "top";
 
       glowCanvas.width = Math.max(1, Math.ceil(vw * bloomScale));
-      glowCanvas.height = Math.max(1, Math.ceil(vh * bloomScale));
+      glowCanvas.height = Math.max(1, Math.ceil(bufH * bloomScale));
       glowCtx.setTransform(bloomScale, 0, 0, bloomScale, 0, 0);
       glowCtx.font = `700 ${fs}px "JetBrains Mono", ui-monospace, Menlo, monospace`;
       glowCtx.textBaseline = "top";
 
-      cw = ctx.measureText("M").width || 8; chh = Math.round(fs * 1.15);
-      cols = Math.ceil(vw / cw); rows = Math.ceil(vh / chh);
-      val = new Float32Array(cols * rows); col = new Uint8Array(cols * rows);
+      cw = ctx.measureText("M").width || 8;
+      chh = Math.round(fs * 1.15);
+      cols = Math.ceil(vw / cw);
+      rows = Math.ceil(bufH / chh);
+      val = new Float32Array(cols * rows);
+      col = new Uint8Array(cols * rows);
     };
     resize();
 
@@ -96,8 +106,8 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         steppingStones.push({
           x: rect.left + window.scrollX + rect.width / 2,
           y: rect.top + window.scrollY + rect.height / 2,
-          rx: rect.width / 2 + 46,
-          ry: rect.height / 2 + 38,
+          rx: rect.width / 2 + 44,
+          ry: rect.height / 2 + 36,
         });
       });
     };
@@ -107,10 +117,10 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
     const worldObserver = new ResizeObserver(syncWorld);
     worldObserver.observe(document.documentElement);
 
+    /* Synchronous GPU compositor offset so DOM stones and pond water stay pixel-locked during scroll */
     const onScroll = () => {
-      const nextCameraY = window.scrollY;
-      mouse.y += nextCameraY - cameraY;
-      cameraY = nextCameraY;
+      const deltaY = renderedCameraY - window.scrollY;
+      canvas.style.transform = `translate3d(0, ${deltaY}px, 0)`;
     };
     const onResize = () => { resize(); syncWorld(); };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -183,12 +193,14 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
     window.addEventListener("pointermove", onMove);
     window.addEventListener("resize", onResize);
 
+    let bufTopY = renderedCameraY - overscan;
+
     const splat = (px: number, py: number, r: number, c: number, amp = 1, over = false) => {
-      const screenY = py - cameraY;
+      const localY = py - bufTopY;
       const x0 = Math.max(0, Math.floor((px - r) / cw)), x1 = Math.min(cols - 1, Math.floor((px + r) / cw));
-      const y0 = Math.max(0, Math.floor((screenY - r) / chh)), y1 = Math.min(rows - 1, Math.floor((screenY + r) / chh));
+      const y0 = Math.max(0, Math.floor((localY - r) / chh)), y1 = Math.min(rows - 1, Math.floor((localY + r) / chh));
       for (let cy = y0; cy <= y1; cy++) for (let cx = x0; cx <= x1; cx++) {
-        const d = Math.hypot((cx + 0.5) * cw - px, (cy + 0.5) * chh - screenY);
+        const d = Math.hypot((cx + 0.5) * cw - px, (cy + 0.5) * chh - localY);
         if (d >= r) continue;
         const t = d / r;
         const v = (1 - t * t * 0.65) * amp;
@@ -374,9 +386,8 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       }
     };
 
-    /* Distribute submerged rocks, pond weeds, bank stones, and lily pads across the full tall pond */
     const rocks = Array.from({ length: 14 }, (_, i) => ({
-      nx: (0.12 + ((i * 0.37) % 0.78)),
+      nx: 0.12 + ((i * 0.37) % 0.78),
       ny: (i + 0.35) / 14,
       rx: 42 + (i % 4) * 9,
       ry: 22 + (i % 3) * 6,
@@ -423,7 +434,9 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
     let last = performance.now(), time = 0, raf = 0;
 
     const frame = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000); last = now; time += dt;
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      time += dt;
       tmix += (target.current - tmix) * Math.min(1, dt * 1.9);
 
       const bgTop = mix(PAL.dark.bgTop, PAL.light.bgTop, tmix);
@@ -443,11 +456,15 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       const padRimColor = mix(PAL.dark.padRim, PAL.light.padRim, tmix);
       const lotusColor = mix(PAL.dark.lotus, PAL.light.lotus, tmix);
 
-      cameraY = window.scrollY;
-      glowCtx.setTransform(bloomScale, 0, 0, bloomScale, 0, -cameraY * bloomScale);
-      glowCtx.clearRect(0, cameraY, vw, vh);
+      /* Sync renderedCameraY and reset compositor offset cleanly on every frame */
+      renderedCameraY = window.scrollY;
+      bufTopY = renderedCameraY - overscan;
+      canvas.style.transform = "translate3d(0, 0px, 0)";
 
-      /* Celestial positions anchored in the top pond reflection so Moon & Sun visibly trade places */
+      glowCtx.setTransform(bloomScale, 0, 0, bloomScale, 0, -bufTopY * bloomScale);
+      glowCtx.clearRect(0, bufTopY, vw, bufH);
+
+      /* Celestial positions anchored in top pond reflection so Moon & Sun trade places */
       const mProg = Math.min(1, tmix / 0.65);
       const mEase = mProg * mProg * (3 - 2 * mProg);
       const moonX = vw * (0.28 - 0.22 * mEase);
@@ -461,12 +478,12 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       const sunVis = Math.min(1, sRaw * 1.35);
 
       ctx.save();
-      ctx.translate(0, -cameraY);
+      ctx.translate(0, -bufTopY);
       ctx.globalAlpha = 1;
       ctx.fillStyle = bgTop;
-      ctx.fillRect(0, cameraY, vw, vh);
+      ctx.fillRect(0, bufTopY, vw, bufH);
 
-      /* Upper-Pond Moonlight & Sunlight Atmospheric Glow (naturally dims as camera scrolls down) */
+      /* Upper-Pond Moonlight & Sunlight Atmospheric Glow */
       if (moonVis > 0.01) {
         ctx.globalAlpha = moonVis;
         const mg = ctx.createRadialGradient(moonX, moonY, 0, moonX, moonY + vh * 0.35, vh * 1.25);
@@ -474,7 +491,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         mg.addColorStop(0.42, "rgba(90, 140, 200, 0.07)");
         mg.addColorStop(1, "rgba(0, 0, 0, 0)");
         ctx.fillStyle = mg;
-        ctx.fillRect(0, cameraY, vw, vh);
+        ctx.fillRect(0, bufTopY, vw, bufH);
       }
       if (sunVis > 0.01) {
         const dawn = Math.sin(sEase * Math.PI);
@@ -484,7 +501,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         sg.addColorStop(0.42, dawn > 0.35 ? "rgba(255, 215, 150, 0.22)" : "rgba(255, 246, 210, 0.16)");
         sg.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = sg;
-        ctx.fillRect(0, cameraY, vw, vh);
+        ctx.fillRect(0, bufTopY, vw, bufH);
       }
 
       /* Submerged Pond Bed Rocks */
@@ -492,11 +509,11 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       for (const r of rocks) {
         const bx = r.nx * vw, by = r.ny * worldHeight;
         const cx0 = Math.max(0, Math.floor((bx - r.rx * 1.2) / cw)), cx1 = Math.min(cols - 1, Math.floor((bx + r.rx * 1.2) / cw));
-        const cy0 = Math.max(0, Math.floor((by - cameraY - r.ry * 1.2) / chh)), cy1 = Math.min(rows - 1, Math.floor((by - cameraY + r.ry * 1.2) / chh));
+        const cy0 = Math.max(0, Math.floor((by - bufTopY - r.ry * 1.2) / chh)), cy1 = Math.min(rows - 1, Math.floor((by - bufTopY + r.ry * 1.2) / chh));
         for (let cy = cy0; cy <= cy1; cy++) {
           let row = "", has = false;
           for (let cx = cx0; cx <= cx1; cx++) {
-            const dx = ((cx + 0.5) * cw - bx) / r.rx, dy = (cameraY + (cy + 0.5) * chh - by) / r.ry;
+            const dx = ((cx + 0.5) * cw - bx) / r.rx, dy = (bufTopY + (cy + 0.5) * chh - by) / r.ry;
             const d = Math.hypot(dx, dy), an = Math.atan2(dy, dx);
             const edge = 1 + 0.14 * Math.sin(3 * an + r.ph) + 0.09 * Math.sin(5 * an + r.ph * 2);
             if (d < edge) {
@@ -506,8 +523,8 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           }
           if (has) {
             const wob = Math.sin(time * 1.3 + cy * 0.8 + r.ph) * 2.2;
-            ctx.globalAlpha = 0.16; ctx.fillText(row, cx0 * cw + wob + 2, cameraY + cy * chh + 1);
-            ctx.globalAlpha = 0.42; ctx.fillText(row, cx0 * cw + wob, cameraY + cy * chh);
+            ctx.globalAlpha = 0.16; ctx.fillText(row, cx0 * cw + wob + 2, bufTopY + cy * chh + 1);
+            ctx.globalAlpha = 0.42; ctx.fillText(row, cx0 * cw + wob, bufTopY + cy * chh);
           }
         }
       }
@@ -516,7 +533,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       ctx.fillStyle = weedColor; ctx.globalAlpha = 0.45;
       for (const w of weeds) {
         const bx = w.nx * vw, by = w.ny * worldHeight;
-        if (by < cameraY - 120 || by > cameraY + vh + 120) continue;
+        if (by < bufTopY - 120 || by > bufTopY + bufH + 120) continue;
         for (let b = 0; b < 5; b++) {
           const len = 6 + (b % 3) * 2;
           for (let k = 0; k < len; k++) {
@@ -526,11 +543,11 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
-      /* Crescent Moon Reflection at Top of Pond */
+      /* Crescent Moon Reflection */
       if (moonVis > 0.03) {
         const mr = 34;
         const x0 = Math.max(0, Math.floor((moonX - mr) / cw)), x1 = Math.min(cols - 1, Math.floor((moonX + mr) / cw));
-        const y0 = Math.max(0, Math.floor((moonY - cameraY - mr) / chh)), y1 = Math.min(rows - 1, Math.floor((moonY - cameraY + mr) / chh));
+        const y0 = Math.max(0, Math.floor((moonY - bufTopY - mr) / chh)), y1 = Math.min(rows - 1, Math.floor((moonY - bufTopY + mr) / chh));
         ctx.fillStyle = PAL.dark.glintBright;
         ctx.globalAlpha = moonVis * 0.72;
         glowCtx.fillStyle = "#B9DCFF";
@@ -539,23 +556,23 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           const wob = Math.sin(time * 2.2 + cy * 0.9) * 3.5;
           for (let cx = x0; cx <= x1; cx++) {
             const dx = ((cx + 0.5) * cw - (moonX + wob)) / mr;
-            const dy = (cameraY + (cy + 0.5) * chh - moonY) / (mr * 0.88);
+            const dy = (bufTopY + (cy + 0.5) * chh - moonY) / (mr * 0.88);
             const d = Math.hypot(dx, dy);
             const cut = Math.hypot(dx - 0.36, dy + 0.14);
             if (d < 1 && cut > 0.78) {
               const ch = d > 0.84 ? (dx < 0 ? "(" : ")") : cut < 0.9 ? ":" : "o";
-              ctx.fillText(ch, cx * cw, cameraY + cy * chh);
-              glowCtx.fillText(ch, cx * cw, cameraY + cy * chh);
+              ctx.fillText(ch, cx * cw, bufTopY + cy * chh);
+              glowCtx.fillText(ch, cx * cw, bufTopY + cy * chh);
             }
           }
         }
       }
 
-      /* Sun Reflection at Top of Pond */
+      /* Sun Reflection */
       if (sunVis > 0.03) {
         const sr = 42;
         const x0 = Math.max(0, Math.floor((sunX - sr * 1.4) / cw)), x1 = Math.min(cols - 1, Math.floor((sunX + sr * 1.4) / cw));
-        const y0 = Math.max(0, Math.floor((sunY - cameraY - sr * 1.4) / chh)), y1 = Math.min(rows - 1, Math.floor((sunY - cameraY + sr * 1.4) / chh));
+        const y0 = Math.max(0, Math.floor((sunY - bufTopY - sr * 1.4) / chh)), y1 = Math.min(rows - 1, Math.floor((sunY - bufTopY + sr * 1.4) / chh));
         ctx.fillStyle = "#FFFFFF";
         ctx.globalAlpha = sunVis * 0.85;
         glowCtx.fillStyle = "#FFF6CC";
@@ -564,30 +581,30 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           const wob = Math.sin(time * 2.5 + cy * 0.85) * 3.0;
           for (let cx = x0; cx <= x1; cx++) {
             const dx = ((cx + 0.5) * cw - (sunX + wob)) / sr;
-            const dy = (cameraY + (cy + 0.5) * chh - sunY) / (sr * 0.86);
+            const dy = (bufTopY + (cy + 0.5) * chh - sunY) / (sr * 0.86);
             const d = Math.hypot(dx, dy);
             if (d < 0.78) {
               const ch = d < 0.42 ? "@" : d < 0.62 ? "*" : "o";
-              ctx.fillText(ch, cx * cw, cameraY + cy * chh);
-              glowCtx.fillText(ch, cx * cw, cameraY + cy * chh);
+              ctx.fillText(ch, cx * cw, bufTopY + cy * chh);
+              glowCtx.fillText(ch, cx * cw, bufTopY + cy * chh);
             } else if (d < 1.32) {
               const an = Math.atan2(dy, dx);
               const ray = Math.sin(an * 8 + time * 1.5);
               if (ray > 0.65) {
                 const ch = d < 1.05 ? "+" : "~";
-                ctx.fillText(ch, cx * cw, cameraY + cy * chh);
-                glowCtx.fillText(ch, cx * cw, cameraY + cy * chh);
+                ctx.fillText(ch, cx * cw, bufTopY + cy * chh);
+                glowCtx.fillText(ch, cx * cw, bufTopY + cy * chh);
               }
             }
           }
         }
       }
 
-      /* Water Ripples + Moonlight/Sunlight Column (spreads wider and dims naturally down the pond) */
+      /* Water Ripples + Moonlight/Sunlight Column (fans wider & attenuates naturally down the pond) */
       const depthScale = Math.max(vh, 720);
       for (let y = 0; y < rows; y++) {
         let r1 = "", r2 = "", r3 = "", h1 = false, h2 = false, h3 = false;
-        const py = cameraY + (y + 0.5) * chh;
+        const py = bufTopY + (y + 0.5) * chh;
         const swayY = Math.sin(py * 0.008 + time * 0.6) * 11;
         const moonColX = moonX + swayY;
         const sunColX = sunX + swayY;
@@ -625,11 +642,11 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           else if (I > 0.14) { r1 += "."; r2 += " "; r3 += " "; h1 = true; }
           else { r1 += " "; r2 += " "; r3 += " "; }
         }
-        if (h1) { ctx.globalAlpha = 0.4; ctx.fillStyle = waterMid; ctx.fillText(r1, 0, cameraY + y * chh); }
-        if (h2) { ctx.globalAlpha = 0.55; ctx.fillStyle = glintSoft; ctx.fillText(r2, 0, cameraY + y * chh); }
+        if (h1) { ctx.globalAlpha = 0.4; ctx.fillStyle = waterMid; ctx.fillText(r1, 0, bufTopY + y * chh); }
+        if (h2) { ctx.globalAlpha = 0.55; ctx.fillStyle = glintSoft; ctx.fillText(r2, 0, bufTopY + y * chh); }
         if (h3) {
-          ctx.globalAlpha = 0.85; ctx.fillStyle = glintBright; ctx.fillText(r3, 0, cameraY + y * chh);
-          glowCtx.globalAlpha = 0.55; glowCtx.fillStyle = glintBright; glowCtx.fillText(r3, 0, cameraY + y * chh);
+          ctx.globalAlpha = 0.85; ctx.fillStyle = glintBright; ctx.fillText(r3, 0, bufTopY + y * chh);
+          glowCtx.globalAlpha = 0.55; glowCtx.fillStyle = glintBright; glowCtx.fillText(r3, 0, bufTopY + y * chh);
         }
       }
 
@@ -638,18 +655,18 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         const bx = pad.nx * vw, by = pad.ny * worldHeight;
         const bobY = Math.sin(time * 1.1 + pad.notch) * 1.5;
         const x0 = Math.max(0, Math.floor((bx - pad.r * 1.2) / cw)), x1 = Math.min(cols - 1, Math.floor((bx + pad.r * 1.2) / cw));
-        const y0 = Math.max(0, Math.floor((by - cameraY - pad.r * 1.2) / chh)), y1 = Math.min(rows - 1, Math.floor((by - cameraY + pad.r * 1.2) / chh));
+        const y0 = Math.max(0, Math.floor((by - bufTopY - pad.r * 1.2) / chh)), y1 = Math.min(rows - 1, Math.floor((by - bufTopY + pad.r * 1.2) / chh));
         for (let cy = y0; cy <= y1; cy++) {
           for (let cx = x0; cx <= x1; cx++) {
             const dx = ((cx + 0.5) * cw - bx) / pad.r;
-            const dy = (cameraY + (cy + 0.5) * chh - (by + bobY)) / (pad.r * 0.76);
+            const dy = (bufTopY + (cy + 0.5) * chh - (by + bobY)) / (pad.r * 0.76);
             const d = Math.hypot(dx, dy);
             const an = Math.atan2(dy, dx);
             const diff = Math.abs(((an - pad.notch + Math.PI) % 6.283) - Math.PI);
             if (d < 1 && diff > 0.24) {
               ctx.globalAlpha = 0.78;
               ctx.fillStyle = d > 0.82 ? padRimColor : padColor;
-              ctx.fillText(d > 0.84 ? "o" : ".", cx * cw, cameraY + cy * chh);
+              ctx.fillText(d > 0.84 ? "o" : ".", cx * cw, bufTopY + cy * chh);
             }
           }
         }
@@ -689,9 +706,9 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       for (const b of shadowBlobs) {
         const ox = b.x + sox * b.s, oy = b.y + soy * b.s, r = b.r * 1.15;
         const x0 = Math.max(0, Math.floor((ox - r) / cw)), x1 = Math.min(cols - 1, Math.floor((ox + r) / cw));
-        const y0 = Math.max(0, Math.floor((oy - cameraY - r) / chh)), y1 = Math.min(rows - 1, Math.floor((oy - cameraY + r) / chh));
+        const y0 = Math.max(0, Math.floor((oy - bufTopY - r) / chh)), y1 = Math.min(rows - 1, Math.floor((oy - bufTopY + r) / chh));
         for (let cy = y0; cy <= y1; cy++) for (let cx = x0; cx <= x1; cx++) {
-          const d = Math.hypot((cx + 0.5) * cw - ox, cameraY + (cy + 0.5) * chh - oy);
+          const d = Math.hypot((cx + 0.5) * cw - ox, bufTopY + (cy + 0.5) * chh - oy);
           if (d >= r) continue;
           const t = d / r, v = (1 - t * t) * 0.85, i = cy * cols + cx;
           if (v > sh[i]) sh[i] = v;
@@ -706,7 +723,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           if (v > 0.05 && val[base + x] <= 0.08) { row += v > 0.55 ? "=" : v > 0.35 ? "-" : v > 0.18 ? ":" : "."; has = true; }
           else row += " ";
         }
-        if (has) ctx.fillText(row, 0, cameraY + y * chh);
+        if (has) ctx.fillText(row, 0, bufTopY + y * chh);
       }
 
       /* Koi Bodies */
@@ -727,14 +744,14 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         for (let q = 0; q < 3; q++) if (has[q]) {
           const str = parts[q].join("");
           ctx.fillStyle = kc[q];
-          ctx.fillText(str, 0, cameraY + y * chh);
+          ctx.fillText(str, 0, bufTopY + y * chh);
           glowCtx.fillStyle = kc[q];
-          glowCtx.fillText(str, 0, cameraY + y * chh);
+          glowCtx.fillText(str, 0, bufTopY + y * chh);
         }
       }
 
       for (const e of eyes) {
-        const ex = Math.floor(e.x / cw) * cw, ey = cameraY + Math.floor((e.y - cameraY) / chh) * chh;
+        const ex = Math.floor(e.x / cw) * cw, ey = bufTopY + Math.floor((e.y - bufTopY) / chh) * chh;
         ctx.fillStyle = bgTop; ctx.fillRect(ex, ey, cw, chh);
         ctx.fillStyle = eyeColor; ctx.fillText("o", ex, ey);
       }
@@ -770,10 +787,10 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       for (const b of bankStones) {
         const bx = b.nx * vw, by = b.ny * worldHeight;
         const cx0 = Math.max(0, Math.floor((bx - b.rx * 1.2) / cw)), cx1 = Math.min(cols - 1, Math.floor((bx + b.rx * 1.2) / cw));
-        const cy0 = Math.max(0, Math.floor((by - cameraY - b.ry * 1.2) / chh)), cy1 = Math.min(rows - 1, Math.floor((by - cameraY + b.ry * 1.2) / chh));
+        const cy0 = Math.max(0, Math.floor((by - bufTopY - b.ry * 1.2) / chh)), cy1 = Math.min(rows - 1, Math.floor((by - bufTopY + b.ry * 1.2) / chh));
         for (let cy = cy0; cy <= cy1; cy++) {
           for (let cx = cx0; cx <= cx1; cx++) {
-            const dx = ((cx + 0.5) * cw - bx) / b.rx, dy = (cameraY + (cy + 0.5) * chh - by) / b.ry;
+            const dx = ((cx + 0.5) * cw - bx) / b.rx, dy = (bufTopY + (cy + 0.5) * chh - by) / b.ry;
             const d = Math.hypot(dx, dy), an = Math.atan2(dy, dx);
             const edge = 1 + 0.14 * Math.sin(3 * an + b.ph) + 0.08 * Math.sin(5 * an + b.ph * 1.7);
             if (d < edge) {
@@ -781,7 +798,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
               ctx.globalAlpha = 0.85;
               ctx.fillStyle = isMoss ? mossColor : rockColor;
               const ch = isMoss ? (d > 0.75 ? "." : "m") : (d > 0.78 ? ":" : "#");
-              ctx.fillText(ch, cx * cw, cameraY + cy * chh);
+              ctx.fillText(ch, cx * cw, bufTopY + cy * chh);
             }
           }
         }
@@ -798,7 +815,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
             const breeze = Math.sin(time * 1.35 + tuft.ph + b * 0.45 + k * 0.35) * (1.5 + k * 1.8);
             const gx = Math.floor((bx + offset + lean * k * cw * 0.7 + breeze) / cw) * cw;
             const gy = Math.floor((by - k * chh) / chh) * chh;
-            if (gx < 0 || gx >= vw || gy < cameraY || gy >= cameraY + vh) continue;
+            if (gx < 0 || gx >= vw || gy < bufTopY || gy >= bufTopY + bufH) continue;
             ctx.globalAlpha = 0.88;
             ctx.fillStyle = progress > 0.65 ? grassTipColor : grassColor;
             const ch = k === height - 1 ? "'" : breeze + lean * 4 > 1.2 ? "/" : breeze + lean * 4 < -1.2 ? "\\" : "|";
@@ -812,11 +829,11 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       ctx.globalCompositeOperation = tmix < 0.5 ? "lighter" : "screen";
       ctx.filter = "blur(7px)";
       ctx.globalAlpha = 0.72 * (1 - tmix * 0.35);
-      ctx.drawImage(glowCanvas, 0, cameraY, vw, vh);
+      ctx.drawImage(glowCanvas, 0, bufTopY, vw, bufH);
 
       ctx.filter = "blur(20px)";
       ctx.globalAlpha = 0.48 * (1 - tmix * 0.42);
-      ctx.drawImage(glowCanvas, 0, cameraY, vw, vh);
+      ctx.drawImage(glowCanvas, 0, bufTopY, vw, bufH);
       ctx.restore();
 
       ctx.globalAlpha = 1;
@@ -838,7 +855,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
   return (
     <canvas
       ref={ref}
-      className="fixed inset-0 z-0 block cursor-crosshair"
+      className="fixed inset-x-0 z-0 block cursor-crosshair will-change-transform"
       aria-label="Interactive ASCII koi garden pond. Click to feed the koi."
     />
   );
