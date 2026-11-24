@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useEffect, useState } from "react";
 import KoiPondCanvas from "./components/KoiPondCanvas";
 import SteppingStone from "./components/SteppingStone";
 import ThemeToggle, { type Theme } from "./components/ThemeToggle";
