@@ -17,12 +17,13 @@
   --kohaku-fg: #080706;
   --gold: #d7aa63;
   --moss: #72a083;
-  --stone-surface: #202326;
-  --stone-face: #202326;
-  --stone-edge: #41464a;
-  --stone-side: #111315;
+  --stone-surface: #292d30;
+  --stone-face: #252a2e;
+  --stone-edge: #566068;
+  --stone-side: #171b1e;
   --stone-wet: #080a0c;
-  --stone-highlight: rgba(233, 224, 205, .2);
+  --stone-highlight: rgba(233, 224, 205, .24);
+  --waterline: #a8cce0;
   --carved-ink: #0b0c0e;
   --carved-body: #c4bfb6;
   --tag-bg: #171a1c;
@@ -32,13 +33,6 @@
   --rail-shadow: #090b0c;
   --slider-track: #15181a;
   --slider-thumb: #2d3236;
-  --sand: #1a1c1e;
-  --sand-ridge: #2d3136;
-  --sand-trough: #090b0d;
-  --rake: #573d29;
-  --rake-light: #c69a69;
-  --rake-shadow: #24170f;
-  --curb: #343a3a;
 }
 
 :root[data-theme="light"] {
@@ -53,11 +47,12 @@
   --gold: #93632e;
   --moss: #356649;
   --stone-surface: #dedbd3;
-  --stone-face: #e3dfd7;
-  --stone-edge: #f1eee7;
-  --stone-side: #aaa69d;
-  --stone-wet: #686861;
-  --stone-highlight: rgba(255, 255, 255, .92);
+  --stone-face: #e0ddd4;
+  --stone-edge: #f7f3e9;
+  --stone-side: #a7a49c;
+  --stone-wet: #666a68;
+  --stone-highlight: rgba(255, 255, 255, .94);
+  --waterline: #6ea8b9;
   --carved-ink: #3f3b35;
   --carved-body: #26231f;
   --tag-bg: #d0ccc3;
@@ -67,30 +62,19 @@
   --rail-shadow: #655f55;
   --slider-track: #d4d0c7;
   --slider-thumb: #f0ece4;
-  --sand: #dfd9ce;
-  --sand-ridge: #f5f1e8;
-  --sand-trough: #a9a399;
-  --rake: #a47548;
-  --rake-light: #e6c08d;
-  --rake-shadow: #684528;
-  --curb: #827c70;
 }
 
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 6rem;
+  scroll-padding-top: 2rem;
   overflow-x: clip;
-  scrollbar-width: none;
 }
-html::-webkit-scrollbar,
-body::-webkit-scrollbar { display: none; }
 body {
   margin: 0;
   overflow-x: clip;
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
-  scrollbar-width: none;
   transition: background-color .65s ease, color .35s ease;
 }
 .skip-link {
@@ -110,111 +94,53 @@ body {
 .font-display { font-family: var(--font-display); letter-spacing: -.015em; }
 .font-mono-tech { font-family: var(--font-mono); }
 
-.pond-header { padding: 12px 16px; background: transparent; }
-.pond-nav-slab {
-  width: fit-content;
-  max-width: calc(100vw - 32px);
-  min-height: 54px;
-  padding: 6px 9px;
-  border: 1px solid var(--stone-edge);
-  border-radius: 3px;
-  background-color: var(--stone-surface);
-  background-image: linear-gradient(145deg, rgba(255,255,255,.07), transparent 40%, rgba(0,0,0,.16));
-  box-shadow: 0 9px 28px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.1), inset 0 -2px 0 rgba(0,0,0,.45);
-}
-.stone-monogram {
-  width: 34px;
-  height: 34px;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--stone-edge);
-  background: linear-gradient(145deg, var(--stone-surface), var(--stone-side));
-  box-shadow: inset 1px 2px 3px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.12);
-  color: var(--carved-body);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: .08em;
-  text-shadow: 0 -1px 1px rgba(0,0,0,.85), 0 1px 0 rgba(255,255,255,.12);
-}
-.pond-control {
-  border: 1px solid var(--stone-edge);
-  background: linear-gradient(150deg, var(--stone-surface), var(--stone-side));
-  box-shadow: inset 0 2px 4px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.1);
-  color: var(--carved-body);
-}
-.pond-control:hover { border-color: var(--moss); color: var(--fg); }
-.pond-nav-slab [role="switch"] {
-  width: 122px;
-  height: 36px;
-  padding: 3px;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-.pond-nav-slab [role="switch"]:hover { border-color: transparent; }
-.pond-nav-slab .theme-slider-thumb {
-  top: 3px;
-  bottom: 3px;
-  left: 3px;
-  width: 54px;
-  border: 1px solid var(--rail-shadow);
-  background: linear-gradient(145deg, var(--stone-edge), var(--slider-thumb));
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.4);
-}
-.pond-nav-slab [role="switch"][aria-checked="true"] .theme-slider-thumb { translate: 60px 0; }
-.nav-link {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 .42rem;
-}
-.nav-link::after {
-  position: absolute;
-  right: .42rem;
-  bottom: 6px;
-  left: .42rem;
-  height: 1px;
-  background: var(--kohaku);
-  content: "";
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform .22s ease;
-}
-.nav-link:hover::after,
-.nav-link[data-active="true"]::after { transform: scaleX(1); }
-
 .stepping-stone {
   position: relative;
   isolation: isolate;
-  --stone-outline: polygon(4% 3%, 11% 0, 24% 2%, 38% 0, 53% 2%, 67% 0, 83% 2%, 95% 1%, 99% 8%, 100% 21%, 98% 36%, 100% 52%, 98% 69%, 99% 83%, 95% 97%, 84% 100%, 70% 98%, 56% 100%, 42% 98%, 27% 100%, 13% 98%, 5% 100%, 1% 93%, 0 80%, 2% 64%, 0 49%, 2% 34%, 0 19%, 2% 8%);
-  width: min(calc(100% - 2.5rem), 896px);
+  width: min(calc(100% - 5rem), 48rem);
   margin-inline: auto;
-  filter: drop-shadow(0 18px 13px rgba(0,0,0,.46)) drop-shadow(0 3px 2px rgba(0,0,0,.38));
+  border-radius: var(--stone-radius, 44% 56% 52% 48% / 18% 22% 20% 24%);
+  filter: drop-shadow(0 22px 24px rgba(0,0,0,.4));
 }
 .stepping-stone::before {
   position: absolute;
   z-index: -2;
-  inset: 7px 0 -16px;
-  background: linear-gradient(110deg, var(--stone-edge), var(--stone-side) 18%, #17191b 64%, var(--stone-wet));
-  clip-path: var(--stone-outline);
+  inset: 5px 8px -13px;
+  border-radius: inherit;
+  background: linear-gradient(118deg, var(--stone-edge), var(--stone-side) 36%, var(--stone-wet) 88%);
+  box-shadow: inset 0 8px 12px rgba(255,255,255,.1), 0 18px 18px rgba(0,0,0,.38);
+  content: "";
+}
+.stepping-stone::after {
+  position: absolute;
+  z-index: -3;
+  inset: -15px -12px -20px;
+  border: 1px solid color-mix(in srgb, var(--waterline, #8db4da) 48%, transparent);
+  border-radius: inherit;
+  box-shadow: 0 0 0 8px color-mix(in srgb, var(--waterline, #8db4da) 13%, transparent), 0 0 0 18px color-mix(in srgb, var(--waterline, #8db4da) 8%, transparent);
+  content: "";
+  opacity: .56;
+  pointer-events: none;
+  animation: stone-ripple 8s ease-in-out infinite;
 }
 .stone-collar {
   position: absolute;
   z-index: -1;
-  inset: 4px -3px -12px;
-  border: 2px solid var(--stone-wet);
-  clip-path: var(--stone-outline);
-  filter: drop-shadow(0 0 5px rgba(0,0,0,.65));
+  inset: 4px -5px -7px;
+  border: 8px solid var(--stone-wet);
+  border-radius: inherit;
+  box-shadow: 0 4px 10px rgba(0,0,0,.45), inset 0 -6px 10px rgba(0,0,0,.24);
+  filter: blur(1px);
   pointer-events: none;
 }
 .stone-top {
   position: relative;
   z-index: 0;
   overflow: hidden;
+  border-radius: inherit;
   background-color: var(--stone-face);
-  background-image: radial-gradient(ellipse at 16% 6%, var(--stone-highlight), transparent 42%), radial-gradient(ellipse at 80% 100%, rgba(0,0,0,.23), transparent 44%), linear-gradient(135deg, rgba(255,255,255,.055), transparent 43%, rgba(0,0,0,.17));
-  clip-path: var(--stone-outline);
+  background-image: radial-gradient(ellipse at 17% 8%, var(--stone-highlight), transparent 43%), radial-gradient(ellipse at 83% 96%, rgba(0,0,0,.27), transparent 46%), linear-gradient(138deg, rgba(255,255,255,.12), transparent 45%, rgba(0,0,0,.2));
+  box-shadow: inset 0 2px 2px rgba(255,255,255,.16), inset -8px -10px 20px rgba(0,0,0,.16);
 }
 .stone-grain {
   position: absolute;
@@ -222,15 +148,22 @@ body {
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: .16;
+  border-radius: inherit;
+  opacity: .2;
   mix-blend-mode: soft-light;
   pointer-events: none;
-  clip-path: var(--stone-outline);
+}
+@keyframes stone-ripple {
+  0%, 100% { transform: scale(.99); opacity: .36; }
+  50% { transform: scale(1.015); opacity: .68; }
 }
 .stone-content {
   position: relative;
   z-index: 3;
-  padding: clamp(1.45rem, 4vw, 3rem) clamp(1.45rem, 5.5vw, 4.5rem);
+  padding: 3rem 2.5rem;
+}
+@media (min-width: 640px) {
+  .stone-content { padding: 3.5rem 4rem; }
 }
 .stone-heading {
   display: flex;
@@ -265,24 +198,12 @@ body {
 }
 .stone-content p:not([class*="text-"]),
 .stone-content li { color: var(--carved-body); }
-#experience .stepping-stone {
-  --stone-outline: polygon(3% 4%, 13% 1%, 26% 3%, 39% 0, 55% 2%, 70% 1%, 84% 3%, 96% 0, 100% 9%, 98% 24%, 100% 41%, 97% 56%, 99% 75%, 95% 94%, 82% 100%, 68% 97%, 52% 100%, 36% 98%, 19% 100%, 6% 96%, 1% 86%, 3% 69%, 0 52%, 2% 35%, 0 18%);
-  transform: translateX(-2.2%);
-}
-#projects .stepping-stone {
-  --stone-outline: polygon(5% 1%, 19% 0, 34% 3%, 50% 1%, 65% 0, 80% 3%, 94% 1%, 99% 7%, 100% 23%, 98% 39%, 100% 54%, 97% 72%, 99% 88%, 93% 98%, 78% 100%, 63% 97%, 48% 100%, 32% 98%, 16% 100%, 4% 96%, 0 85%, 2% 68%, 0 50%, 3% 33%, 1% 17%);
-  transform: translateX(2.1%);
-}
-#skills .stepping-stone {
-  --stone-outline: polygon(4% 2%, 17% 0, 31% 2%, 45% 1%, 61% 3%, 76% 0, 91% 2%, 98% 9%, 100% 26%, 97% 43%, 99% 61%, 96% 79%, 98% 93%, 88% 100%, 73% 98%, 56% 100%, 41% 97%, 26% 100%, 11% 97%, 2% 92%, 0 77%, 2% 58%, 0 40%, 3% 22%);
-  transform: translateX(-1.2%);
-}
-#contact .stepping-stone {
-  --stone-outline: polygon(6% 4%, 20% 1%, 36% 0, 51% 2%, 66% 0, 82% 2%, 95% 0, 100% 12%, 98% 29%, 100% 47%, 97% 63%, 100% 81%, 94% 97%, 79% 100%, 64% 98%, 48% 100%, 33% 97%, 18% 100%, 5% 96%, 0 87%, 2% 71%, 0 53%, 3% 36%, 1% 19%);
-  transform: translateX(1.5%);
-}
-#top .stepping-stone { margin-top: auto; }
-main { gap: clamp(7rem, 14vh, 11rem) !important; padding-bottom: 16rem; }
+#top .stepping-stone { --stone-radius: 47% 53% 51% 49% / 15% 19% 23% 22%; margin-top: auto; }
+#experience .stepping-stone { --stone-radius: 41% 59% 47% 53% / 20% 18% 22% 24%; transform: translateX(-2.5%); }
+#projects .stepping-stone { --stone-radius: 53% 47% 55% 45% / 19% 22% 18% 23%; transform: translateX(2.5%); }
+#skills .stepping-stone { --stone-radius: 46% 54% 50% 50% / 18% 20% 24% 20%; transform: translateX(-1.5%); }
+#contact .stepping-stone { --stone-radius: 55% 45% 48% 52% / 20% 17% 24% 21%; transform: translateX(1.5%); }
+main { gap: clamp(8rem, 16vh, 12rem) !important; padding-bottom: 14rem; }
 .stone-content .border-t,
 .stone-content .border-b,
 .stone-content .divide-y > :not(:first-child) {
@@ -293,7 +214,7 @@ main { gap: clamp(7rem, 14vh, 11rem) !important; padding-bottom: 16rem; }
   display: inline-flex;
   padding: 4px 9px;
   border: 1px solid var(--stone-edge);
-  border-radius: 2px;
+  border-radius: 999px;
   background: linear-gradient(145deg, var(--tag-bg), var(--stone-side));
   box-shadow: inset 0 2px 4px rgba(0,0,0,.72), 0 1px 0 rgba(255,255,255,.08);
   color: var(--carved-body);
@@ -335,64 +256,6 @@ main { gap: clamp(7rem, 14vh, 11rem) !important; padding-bottom: 16rem; }
 }
 .btn-main:hover { border-color: #f18869; color: #fff7ed; filter: brightness(1.08); }
 
-.zen-sand-bed {
-  position: fixed;
-  z-index: 35;
-  inset: 0 0 0 auto;
-  width: 68px;
-  overflow: hidden;
-  background: var(--sand);
-  box-shadow: inset 5px 0 12px rgba(0,0,0,.22), -5px 0 18px rgba(0,0,0,.16);
-  touch-action: none;
-  cursor: ns-resize;
-  transition: opacity .3s ease, visibility .3s ease;
-}
-.zen-sand-bed canvas { position: absolute; z-index: 0; inset: 0; width: 68px; pointer-events: none; }
-.zen-sand-bed::before {
-  position: absolute;
-  z-index: 2;
-  inset: 0 auto 0 0;
-  width: 11px;
-  background: linear-gradient(90deg, var(--stone-wet), var(--curb) 55%, rgba(0,0,0,.16)), repeating-linear-gradient(180deg, transparent 0 27px, rgba(0,0,0,.2) 28px 30px);
-  box-shadow: inset -2px 0 2px rgba(255,255,255,.13), 2px 0 6px rgba(0,0,0,.36);
-  content: "";
-  clip-path: polygon(0 0, 100% 0, 93% 7%, 100% 15%, 91% 24%, 100% 35%, 92% 45%, 100% 56%, 91% 67%, 100% 79%, 92% 90%, 100% 100%, 0 100%);
-  pointer-events: none;
-}
-.zen-sand-bed.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-.zen-rake {
-  position: absolute;
-  z-index: 3;
-  top: 0;
-  left: 5px;
-  width: 58px;
-  height: 48px;
-  will-change: transform;
-  pointer-events: none;
-}
-.rake-illustration { display: block; width: 58px; height: 48px; overflow: visible; }
-.rake-handle-shadow { fill: none; stroke: rgba(0,0,0,.48); stroke-width: 8; stroke-linecap: round; }
-.rake-handle { fill: none; stroke: url(#rakeWood); stroke-width: 5; stroke-linecap: round; }
-.rake-bar-shadow { fill: none; stroke: rgba(0,0,0,.38); stroke-width: 8; stroke-linecap: round; }
-.rake-bar { fill: none; stroke: url(#rakeWood); stroke-width: 5; stroke-linecap: square; }
-.rake-tine { fill: none; stroke: var(--rake-shadow); stroke-width: 2.8; stroke-linecap: round; }
-.rake-edge-highlight { fill: none; stroke: var(--rake-light); stroke-width: 1; opacity: .85; }
-.moss-stone {
-  position: absolute;
-  z-index: 4;
-  left: 18px;
-  width: 25px;
-  height: 14px;
-  border: 1px solid rgba(0,0,0,.36);
-  border-radius: 58% 42% 56% 44%;
-  background: radial-gradient(ellipse at 35% 25%, #708264, #3a664b 55%, #1e392b 100%);
-  box-shadow: inset 1px 1px 2px rgba(255,255,255,.16), 0 3px 5px rgba(0,0,0,.55);
-  pointer-events: none;
-}
-.moss-top { top: 7px; }
-.moss-middle { top: 50%; left: 38px; width: 18px; height: 11px; }
-.moss-bottom { bottom: 7px; left: 25px; width: 29px; height: 16px; }
-
 @keyframes hero-settle {
   from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
@@ -400,21 +263,15 @@ main { gap: clamp(7rem, 14vh, 11rem) !important; padding-bottom: 16rem; }
 [data-enter] .enter-1 { opacity: 0; animation: hero-settle .7s cubic-bezier(.22,1,.36,1) forwards; }
 [data-enter] .enter-2 { opacity: 0; animation: hero-settle .7s cubic-bezier(.22,1,.36,1) .12s forwards; }
 @media (max-width: 767px) {
-  .pond-header { padding: 10px 8px; }
-  .pond-nav-slab { min-height: 48px; gap: 0; padding: 4px 5px; }
-  .nav-link { min-height: 38px; padding: 0 .34rem; }
-  .nav-link::after { right: .34rem; left: .34rem; }
-  .pond-nav-slab [role="switch"] { width: 100px; height: 34px; }
-  .pond-nav-slab .theme-slider-thumb { width: 44px; }
-  .pond-nav-slab [role="switch"][aria-checked="true"] .theme-slider-thumb { translate: 48px 0; }
+  .theme-slider-thumb { transition-duration: .24s; }
+  .stone-content { padding: 3rem 2.5rem; }
   #experience .stepping-stone,
   #projects .stepping-stone,
   #skills .stepping-stone,
   #contact .stepping-stone { transform: none; }
-  .zen-sand-bed { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .btn, .nav-link::after, .zen-sand-bed { transition: none; }
+  .btn, .theme-slider-thumb { transition: none; }
   [data-enter] .enter-1, [data-enter] .enter-2 { opacity: 1; animation: none; }
 }

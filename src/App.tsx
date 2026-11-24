@@ -1,42 +1,15 @@
 import { useEffect, useState } from "react";
 import KoiPondCanvas from "./components/KoiPondCanvas";
 import SteppingStone from "./components/SteppingStone";
-import ZenSandScrollbar from "./components/ZenSandScrollbar";
 import ThemeToggle, { type Theme } from "./components/ThemeToggle";
 import { profile, experience, projects, skills, education } from "./resumeData";
-
-const navItems = [
-  { label: "Experience", href: "#experience", id: "experience" },
-  { label: "Projects", href: "#projects", id: "projects" },
-  { label: "Skills", href: "#skills", id: "skills" },
-  { label: "Contact", href: "#contact", id: "contact" },
-];
 
 export default function App() {
   const [theme, setTheme] = useState<Theme>("dark");
   const [copied, setCopied] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>("");
-  const [pondOnly, setPondOnly] = useState(false);
-
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActiveSection(entry.target.id);
-        }
-      },
-      { rootMargin: "-25% 0px -55% 0px" }
-    );
-    for (const item of navItems) {
-      const el = document.getElementById(item.id);
-      if (el) observer.observe(el);
-    }
-    return () => observer.disconnect();
-  }, []);
 
   const copyEmail = async () => {
     try {
@@ -79,86 +52,17 @@ export default function App() {
       </a>
 
       <KoiPondCanvas theme={theme} />
-      <ZenSandScrollbar hidden={pondOnly} />
+      <ThemeToggle
+        theme={theme}
+        onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
+      />
 
-      {/* Floating Restore Control when viewing unobstructed garden pond */}
-      {pondOnly && (
-        <div className="pointer-events-none fixed inset-x-0 top-0 z-30 pt-4">
-          <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 sm:px-8">
-            <button
-              type="button"
-              onClick={() => setPondOnly(false)}
-              className="pond-control pointer-events-auto inline-flex min-h-11 cursor-pointer items-center gap-2.5 px-4 font-mono-tech text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)]"
-            >
-              <span
-                aria-hidden="true"
-                className="h-1.5 w-1.5 rotate-45 bg-[var(--kohaku)]"
-              />
-              <span>Show interface</span>
-            </button>
-
-            <ThemeToggle
-              theme={theme}
-              onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
-            />
-          </div>
-        </div>
-      )}
-
-      <div
-        className={`pointer-events-none relative z-10 min-h-screen transition-opacity duration-500 ${
-          pondOnly ? "opacity-0" : "opacity-100"
-        }`}
-        aria-hidden={pondOnly}
-      >
-        <header className="pond-header pointer-events-none fixed inset-x-0 top-0 z-20">
-          <div className="pond-nav-slab pointer-events-auto mx-auto flex items-center justify-center gap-2 sm:gap-3">
-            <a
-              href="#top"
-              aria-label="Rahul Sonawane, back to top"
-              className="stone-monogram hidden sm:inline-flex"
-            >
-              RS
-            </a>
-
-            <nav aria-label="Primary" className="flex items-center gap-0 sm:gap-1">
-              {navItems.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.href}
-                  data-active={activeSection === item.id}
-                  className={`nav-link font-mono-tech text-[10px] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)] sm:text-xs ${
-                    activeSection === item.id
-                      ? "font-semibold text-[var(--fg)]"
-                      : "text-[var(--muted)] hover:text-[var(--fg)]"
-                  }`}
-                >
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPondOnly(true)}
-                className="pond-control hidden min-h-9 cursor-pointer items-center px-2.5 font-mono-tech text-[10px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)] sm:inline-flex"
-                title="Hide interface to watch the koi pond"
-              >
-                Pond
-              </button>
-              <ThemeToggle
-                theme={theme}
-                onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
-              />
-            </div>
-          </div>
-        </header>
+      <div className="pointer-events-none relative z-10 min-h-screen">
 
         {/* Main Content — Full-Viewport-Width Arched Timber SteppingStones Spanning Bank to Bank */}
         <main
           id="main-content"
-          className="flex w-full flex-col gap-36 pb-32"
+          className="flex w-full flex-col gap-32 pb-32 sm:gap-40"
         >
           {/* Screen 1: Open Upper Water + Entrance SteppingStone Anchored in Lower Third */}
           <section

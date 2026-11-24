@@ -13,7 +13,11 @@ export default function SteppingStone({ children, className = "", id, title, sub
   const textureId = useId().replace(/:/g, "");
 
   return (
-    <article id={id} className={`stepping-stone pointer-events-auto ${className}`}>
+    <article
+      id={id}
+      data-stepping-stone
+      className={`stepping-stone pointer-events-auto ${className}`}
+    >
       <svg aria-hidden="true" className="stone-grain" viewBox="0 0 100 100" preserveAspectRatio="none">
         <filter id={textureId}>
           <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" seed="9" />
