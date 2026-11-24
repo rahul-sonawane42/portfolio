@@ -1,41 +1,15 @@
 import { useEffect, useState } from "react";
 import KoiPondCanvas from "./components/KoiPondCanvas";
-import Footbridge from "./components/Footbridge";
+import SteppingStone from "./components/SteppingStone";
 import ThemeToggle, { type Theme } from "./components/ThemeToggle";
 import { profile, experience, projects, skills, education } from "./resumeData";
-
-const navItems = [
-  { label: "Experience", href: "#experience", id: "experience" },
-  { label: "Projects", href: "#projects", id: "projects" },
-  { label: "Skills", href: "#skills", id: "skills" },
-  { label: "Contact", href: "#contact", id: "contact" },
-];
 
 export default function App() {
   const [theme, setTheme] = useState<Theme>("dark");
   const [copied, setCopied] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>("");
-  const [pondOnly, setPondOnly] = useState(false);
-
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
   }, [theme]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) setActiveSection(entry.target.id);
-        }
-      },
-      { rootMargin: "-25% 0px -55% 0px" }
-    );
-    for (const item of navItems) {
-      const el = document.getElementById(item.id);
-      if (el) observer.observe(el);
-    }
-    return () => observer.disconnect();
-  }, []);
 
   const copyEmail = async () => {
     try {
@@ -78,88 +52,19 @@ export default function App() {
       </a>
 
       <KoiPondCanvas theme={theme} />
+      <ThemeToggle
+        theme={theme}
+        onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
+      />
 
-      {/* Floating Restore Control when viewing unobstructed garden pond */}
-      {pondOnly && (
-        <div className="pointer-events-none fixed inset-x-0 top-0 z-30 pt-4">
-          <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-5 sm:px-8">
-            <button
-              type="button"
-              onClick={() => setPondOnly(false)}
-              className="pointer-events-auto inline-flex min-h-11 cursor-pointer items-center gap-2.5 border-2 border-[var(--wood-mid)] bg-[var(--plank)] px-4 font-mono-tech text-xs text-[var(--fg)] transition-colors hover:border-[var(--kohaku)] hover:text-[var(--kohaku)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)]"
-            >
-              <span
-                aria-hidden="true"
-                className="h-1.5 w-1.5 rotate-45 bg-[var(--kohaku)]"
-              />
-              <span>Show bridges</span>
-            </button>
+      <div className="pointer-events-none relative z-10 min-h-screen">
 
-            <ThemeToggle
-              theme={theme}
-              onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
-            />
-          </div>
-        </div>
-      )}
-
-      <div
-        className={`pointer-events-none relative z-10 min-h-screen transition-opacity duration-500 ${
-          pondOnly ? "opacity-0" : "opacity-100"
-        }`}
-        aria-hidden={pondOnly}
-      >
-        {/* Top Garden Overlook Walkway */}
-        <header className="walkway-nav pointer-events-auto fixed inset-x-0 top-0 z-20">
-          <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-5 py-2 sm:px-8">
-            <a
-              href="#top"
-              className="inline-flex min-h-11 items-center font-display text-2xl text-[var(--fg)] transition-colors hover:text-[var(--kohaku)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)]"
-            >
-              Rahul Sonawane
-            </a>
-
-            <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
-              {navItems.map((item) => (
-                <a
-                  key={item.id}
-                  href={item.href}
-                  data-active={activeSection === item.id}
-                  className={`nav-link font-mono-tech text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)] ${
-                    activeSection === item.id
-                      ? "font-semibold text-[var(--fg)]"
-                      : "text-[var(--muted)] hover:text-[var(--fg)]"
-                  }`}
-                >
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setPondOnly(true)}
-                className="pointer-events-auto hidden min-h-11 cursor-pointer items-center border-2 border-[var(--wood-mid)] bg-[var(--tag-bg)] px-3 font-mono-tech text-[11px] font-medium text-[var(--muted)] transition-colors hover:border-[var(--moss)] hover:text-[var(--fg)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--kohaku)] sm:inline-flex"
-                title="Hide footbridges to watch the koi pond"
-              >
-                Pond
-              </button>
-
-              <ThemeToggle
-                theme={theme}
-                onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
-              />
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content — Full-Viewport-Width Arched Timber Footbridges Spanning Bank to Bank */}
+        {/* Main Content — Full-Viewport-Width Arched Timber SteppingStones Spanning Bank to Bank */}
         <main
           id="main-content"
-          className="flex w-full flex-col gap-36 pb-32"
+          className="flex w-full flex-col gap-32 pb-32 sm:gap-40"
         >
-          {/* Screen 1: Open Upper Water + Entrance Footbridge Anchored in Lower Third */}
+          {/* Screen 1: Open Upper Water + Entrance SteppingStone Anchored in Lower Third */}
           <section
             id="top"
             data-enter=""
@@ -172,8 +77,8 @@ export default function App() {
               </p>
             </div>
 
-            {/* Primary Entrance Footbridge spanning edge-to-edge across the pond */}
-            <Footbridge className="enter-1 mt-auto">
+            {/* Primary Entrance SteppingStone spanning edge-to-edge across the pond */}
+            <SteppingStone className="enter-1 mt-auto">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="font-mono-tech text-xs font-medium text-[var(--kohaku)]">
                   {profile.role}
@@ -203,12 +108,12 @@ export default function App() {
                   )}
                 </div>
               </div>
-            </Footbridge>
+            </SteppingStone>
           </section>
 
-          {/* Section 2: Experience Footbridge — Full-Width Span */}
+          {/* Section 2: Experience SteppingStone — Full-Width Span */}
           <section id="experience" className="pt-4">
-            <Footbridge title="Experience and leadership">
+            <SteppingStone title="Experience and leadership">
               <div className="divide-y divide-[var(--line)]">
                 {experience.map((r) => (
                   <article
@@ -240,12 +145,12 @@ export default function App() {
                   </article>
                 ))}
               </div>
-            </Footbridge>
+            </SteppingStone>
           </section>
 
-          {/* Section 3: Projects Footbridge — Full-Width Span */}
+          {/* Section 3: Projects SteppingStone — Full-Width Span */}
           <section id="projects" className="pt-4">
-            <Footbridge title="Featured projects">
+            <SteppingStone title="Featured projects">
               <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                 {projects.map((p, i) => (
                   <article
@@ -297,12 +202,12 @@ export default function App() {
                   </article>
                 ))}
               </div>
-            </Footbridge>
+            </SteppingStone>
           </section>
 
-          {/* Section 4: Technical Skills Footbridge — Full-Width Span */}
+          {/* Section 4: Technical Skills SteppingStone — Full-Width Span */}
           <section id="skills" className="pt-4">
-            <Footbridge title="Technical skills">
+            <SteppingStone title="Technical skills">
               <div className="divide-y divide-[var(--line)]">
                 {Object.entries(skills).map(([group, items]) => (
                   <div
@@ -322,12 +227,12 @@ export default function App() {
                   </div>
                 ))}
               </div>
-            </Footbridge>
+            </SteppingStone>
           </section>
 
-          {/* Section 5: Education & Contact Footbridge — Full-Width Span */}
+          {/* Section 5: Education & Contact SteppingStone — Full-Width Span */}
           <section id="contact" className="pt-4">
-            <Footbridge title="Education and contact">
+            <SteppingStone title="Education and contact">
               <div className="grid grid-cols-1 gap-8 border-b border-[var(--line)] pb-8 md:grid-cols-2">
                 {education.map((e) => (
                   <div key={e.degree}>
@@ -369,7 +274,7 @@ export default function App() {
                   )}
                 </div>
               </footer>
-            </Footbridge>
+            </SteppingStone>
           </section>
         </main>
       </div>
