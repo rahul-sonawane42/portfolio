@@ -59,6 +59,7 @@ const PAL = {
 const RAMP = " .:-=+*#%@";
 const W = [3.6, 5.0, 5.8, 5.7, 5.0, 4.1, 3.1, 2.3, 1.6, 1.15, 0.9];
 const N = W.length;
+const OVERSCAN = 220;
 
 const ATLAS_CHARS = [
   "#",
@@ -104,6 +105,8 @@ const ATLAS_COLOR_KEYS = [
   "lanternStone",
   "lanternGlow",
   "food",
+  "waterMid",
+  "glintSoft",
   "glintBright",
 ] as const;
 
@@ -119,6 +122,10 @@ const mix = (a: string, b: string, t: number) => {
     y = hex(b);
   return `rgb(${x.map((v, i) => Math.round(v + (y[i] - v) * t)).join(",")})`;
 };
+
+// Fast rational Gaussian approximation (~15x faster than Math.exp in inner loops)
+const fastGauss = (d2: number) =>
+  d2 > 8 ? 0 : 1 / (1 + d2 + 0.48 * d2 * d2);
 
 interface P {
   x: number;
@@ -165,6 +172,8 @@ interface StoneBox {
   y: number;
   rx: number;
   ry: number;
+  shoreRx: number;
+  shoreRy: number;
 }
 
 export default function KoiPondCanvas({ theme }: { theme: Theme }) {
@@ -192,20 +201,28 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       cols = 0,
       rows = 0,
       vw = 0,
-      vh = 0;
+      vh = 0,
+      renderH = 0;
     let worldHeight = Math.max(
       window.innerHeight,
       document.documentElement.scrollHeight
     );
     let val = new Float32Array(0),
       col = new Uint8Array(0);
+    let colSin1 = new Float32Array(0),
+      colU = new Float32Array(0),
+      colBand = new Float32Array(0),
+      colSpA = new Float32Array(0),
+      colSpB = new Float32Array(0),
+      colPx = new Float32Array(0);
+
     const mouse = { x: -9999, y: -9999 };
-    const koiObstacles: StoneBox[] = [];
-    const shoreStones: StoneBox[] = [];
+    const stones: StoneBox[] = [];
     const foods: Food[] = [],
       ripples: Ripple[] = [],
       sparks: Spark[] = [];
     let tmix = target.current;
+    let lastAnchorY = Number.NaN;
 
     const rebuildAtlas = (palette: Record<AtlasColorKey, string>) => {
       atlasStepW = Math.ceil(cw + 2);
@@ -266,17 +283,18 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
       vw = window.innerWidth;
       vh = window.innerHeight;
+      renderH = vh + OVERSCAN * 2;
 
       canvas.width = Math.round(vw * dpr);
-      canvas.height = Math.round(vh * dpr);
+      canvas.height = Math.round(renderH * dpr);
       canvas.style.width = `${vw}px`;
-      canvas.style.height = `${vh}px`;
+      canvas.style.height = `${renderH}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.font = `600 ${fs}px "JetBrains Mono", ui-monospace, Menlo, monospace`;
       ctx.textBaseline = "top";
 
       glowCanvas.width = Math.max(1, Math.ceil(vw * bloomScale));
-      glowCanvas.height = Math.max(1, Math.ceil(vh * bloomScale));
+      glowCanvas.height = Math.max(1, Math.ceil(renderH * bloomScale));
       glowCtx.setTransform(bloomScale, 0, 0, bloomScale, 0, 0);
       glowCtx.font = `700 ${fs}px "JetBrains Mono", ui-monospace, Menlo, monospace`;
       glowCtx.textBaseline = "top";
@@ -284,10 +302,20 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       cw = ctx.measureText("M").width || 8;
       chh = Math.round(fs * 1.15);
       cols = Math.ceil(vw / cw);
-      rows = Math.ceil(vh / chh) + 1;
+      rows = Math.ceil(renderH / chh) + 1;
       val = new Float32Array(cols * rows);
       col = new Uint8Array(cols * rows);
+      colSin1 = new Float32Array(cols);
+      colU = new Float32Array(cols);
+      colBand = new Float32Array(cols);
+      colSpA = new Float32Array(cols);
+      colSpB = new Float32Array(cols);
+      colPx = new Float32Array(cols);
+      for (let x = 0; x < cols; x++) {
+        colPx[x] = (x + 0.5) * cw;
+      }
       lastAtlasMix = -1;
+      lastAnchorY = Number.NaN;
     };
     resize();
 
@@ -296,30 +324,20 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         window.innerHeight,
         document.documentElement.scrollHeight
       );
-      koiObstacles.length = 0;
-      shoreStones.length = 0;
+      stones.length = 0;
 
       document
         .querySelectorAll<HTMLElement>("[data-stepping-stone]")
         .forEach((element) => {
           const rect = element.getBoundingClientRect();
-          koiObstacles.push({
+          if (rect.width <= 0 || rect.height <= 0) return;
+          stones.push({
             x: rect.left + window.scrollX + rect.width / 2,
             y: rect.top + window.scrollY + rect.height / 2,
-            rx: rect.width / 2 + 38,
-            ry: rect.height / 2 + 30,
-          });
-        });
-
-      document
-        .querySelectorAll<HTMLElement>("[data-stone-shore]")
-        .forEach((element) => {
-          const rect = element.getBoundingClientRect();
-          shoreStones.push({
-            x: rect.left + window.scrollX + rect.width / 2,
-            y: rect.top + window.scrollY + rect.height / 2,
-            rx: rect.width / 2 + 16,
-            ry: rect.height / 2 + 14,
+            rx: rect.width / 2 + 28,
+            ry: rect.height / 2 + 22,
+            shoreRx: Math.max(4, rect.width * 0.5 - 12),
+            shoreRy: Math.max(4, rect.height * 0.5 - 11),
           });
         });
     };
@@ -423,6 +441,15 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
     };
 
     const onDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      const targetEl = e.target as HTMLElement | null;
+      if (
+        targetEl?.closest(
+          "a, button, input, textarea, select, [data-stepping-stone], [data-wooden-deck]"
+        )
+      ) {
+        return;
+      }
       const worldY = e.clientY + window.scrollY;
       foods.push({ x: e.clientX, y: worldY, age: 0, dead: false });
       addRipple(e.clientX, worldY);
@@ -432,11 +459,11 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       mouse.y = e.clientY + window.scrollY;
     };
 
-    canvas.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerdown", onDown, { passive: true });
     window.addEventListener("pointermove", onMove, { passive: true });
     window.addEventListener("resize", onResize);
 
-    let scrollY = window.scrollY;
+    let anchorY = Math.round(window.scrollY - OVERSCAN);
 
     const splat = (
       px: number,
@@ -446,7 +473,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       amp = 1,
       over = false
     ) => {
-      const localY = py - scrollY;
+      const localY = py - anchorY;
       const x0 = Math.max(0, Math.floor((px - r) / cw)),
         x1 = Math.min(cols - 1, Math.floor((px + r) / cw));
       const y0 = Math.max(0, Math.floor((localY - r) / chh)),
@@ -508,7 +535,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       if (k.y < m) pushY += (m - k.y) / m;
       if (k.y > worldHeight - m) pushY -= (k.y - (worldHeight - m)) / m;
 
-      for (const stone of koiObstacles) {
+      for (const stone of stones) {
         const dx = k.x - stone.x;
         const dy = k.y - stone.y;
         const nx = dx / stone.rx;
@@ -760,15 +787,21 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       time += dt;
       tmix += (target.current - tmix) * Math.min(1, dt * 1.9);
 
-      scrollY = window.scrollY;
+      // Anchor the overscan canvas in document space so compositor scrolling stays 1:1 locked
+      anchorY = Math.round(window.scrollY - OVERSCAN);
+      if (anchorY !== lastAnchorY) {
+        lastAnchorY = anchorY;
+        canvas.style.transform = `translate3d(0, ${anchorY}px, 0)`;
+      }
 
       const bgTop = mix(PAL.dark.bgTop, PAL.light.bgTop, tmix);
       const bgMid = mix(PAL.dark.bgMid, PAL.light.bgMid, tmix);
       const bgBottom = mix(PAL.dark.bgBottom, PAL.light.bgBottom, tmix);
-      const kc = [0, 1, 2].map((i) => mix(PAL.dark.koi[i], PAL.light.koi[i], tmix));
+      const kc = [0, 1, 2].map((i) =>
+        mix(PAL.dark.koi[i], PAL.light.koi[i], tmix)
+      );
       const eyeColor = mix(PAL.dark.eye, PAL.light.eye, tmix);
       const shadowColor = mix(PAL.dark.shadow, PAL.light.shadow, tmix);
-      const waterMid = mix(PAL.dark.waterMid, PAL.light.waterMid, tmix);
       const glintBright = mix(PAL.dark.glintBright, PAL.light.glintBright, tmix);
       const glintSoft = mix(PAL.dark.glintSoft, PAL.light.glintSoft, tmix);
       const lanternGlowColor = mix(
@@ -790,15 +823,28 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           lotus: mix(PAL.dark.lotus, PAL.light.lotus, tmix),
           bamboo: mix(PAL.dark.bamboo, PAL.light.bamboo, tmix),
           bambooNode: mix(PAL.dark.bambooNode, PAL.light.bambooNode, tmix),
-          lanternStone: mix(PAL.dark.lanternStone, PAL.light.lanternStone, tmix),
+          lanternStone: mix(
+            PAL.dark.lanternStone,
+            PAL.light.lanternStone,
+            tmix
+          ),
           lanternGlow: lanternGlowColor,
           food: mix(PAL.dark.food, PAL.light.food, tmix),
+          waterMid: mix(PAL.dark.waterMid, PAL.light.waterMid, tmix),
+          glintSoft,
           glintBright,
         });
       }
 
-      glowCtx.setTransform(bloomScale, 0, 0, bloomScale, 0, -scrollY * bloomScale);
-      glowCtx.clearRect(0, scrollY, vw, vh);
+      glowCtx.setTransform(
+        bloomScale,
+        0,
+        0,
+        bloomScale,
+        0,
+        -anchorY * bloomScale
+      );
+      glowCtx.clearRect(0, anchorY, vw, renderH);
 
       const mProg = Math.min(1, tmix / 0.65);
       const mEase = mProg * mProg * (3 - 2 * mProg);
@@ -813,7 +859,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       const sunVis = Math.min(1, sRaw * 1.35);
 
       ctx.save();
-      ctx.translate(0, -scrollY);
+      ctx.translate(0, -anchorY);
       ctx.globalAlpha = 1;
 
       /* Pond Bed Depth Gradient: Luminous Near Top, Gradually Darkening Toward Bottom */
@@ -822,7 +868,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       pondGrad.addColorStop(0.45, bgMid);
       pondGrad.addColorStop(1, bgBottom);
       ctx.fillStyle = pondGrad;
-      ctx.fillRect(0, scrollY, vw, vh);
+      ctx.fillRect(0, anchorY, vw, renderH);
 
       /* Spreading Upper-Pond Moonlight & Sunlight Atmospheric Glow */
       if (moonVis > 0.01) {
@@ -839,7 +885,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         mg.addColorStop(0.45, "rgba(84, 134, 194, 0.07)");
         mg.addColorStop(1, "rgba(0, 0, 0, 0)");
         ctx.fillStyle = mg;
-        ctx.fillRect(0, scrollY, vw, vh);
+        ctx.fillRect(0, anchorY, vw, renderH);
       }
       if (sunVis > 0.01) {
         const dawn = Math.sin(sEase * Math.PI);
@@ -866,25 +912,28 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         );
         sg.addColorStop(1, "rgba(255, 255, 255, 0)");
         ctx.fillStyle = sg;
-        ctx.fillRect(0, scrollY, vw, vh);
+        ctx.fillRect(0, anchorY, vw, renderH);
       }
 
       /* Submerged Pond Bed Rocks (Atlas-Stamped) */
       for (const r of rocks) {
         const bx = r.nx * vw,
           by = r.ny * worldHeight;
-        if (by + r.ry * 1.3 < scrollY || by - r.ry * 1.3 > scrollY + vh)
+        if (by + r.ry * 1.3 < anchorY || by - r.ry * 1.3 > anchorY + renderH)
           continue;
         const cx0 = Math.max(0, Math.floor((bx - r.rx * 1.2) / cw)),
           cx1 = Math.min(cols - 1, Math.floor((bx + r.rx * 1.2) / cw));
-        const cy0 = Math.max(0, Math.floor((by - scrollY - r.ry * 1.2) / chh)),
-          cy1 = Math.min(rows - 1, Math.floor((by - scrollY + r.ry * 1.2) / chh));
+        const cy0 = Math.max(0, Math.floor((by - anchorY - r.ry * 1.2) / chh)),
+          cy1 = Math.min(
+            rows - 1,
+            Math.floor((by - anchorY + r.ry * 1.2) / chh)
+          );
         for (let cy = cy0; cy <= cy1; cy++) {
           let rowStr = "",
             has = false;
           for (let cx = cx0; cx <= cx1; cx++) {
             const dx = ((cx + 0.5) * cw - bx) / r.rx,
-              dy = (scrollY + (cy + 0.5) * chh - by) / r.ry;
+              dy = (anchorY + (cy + 0.5) * chh - by) / r.ry;
             const d = Math.hypot(dx, dy),
               an = Math.atan2(dy, dx);
             const edge =
@@ -906,9 +955,15 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           if (has) {
             const wob = Math.sin(time * 1.3 + cy * 0.8 + r.ph) * 2.2;
             ctx.globalAlpha = 0.16;
-            stampText(ctx, rowStr, "rock", cx0 * cw + wob + 2, scrollY + cy * chh + 1);
+            stampText(
+              ctx,
+              rowStr,
+              "rock",
+              cx0 * cw + wob + 2,
+              anchorY + cy * chh + 1
+            );
             ctx.globalAlpha = 0.42;
-            stampText(ctx, rowStr, "rock", cx0 * cw + wob, scrollY + cy * chh);
+            stampText(ctx, rowStr, "rock", cx0 * cw + wob, anchorY + cy * chh);
           }
         }
       }
@@ -918,7 +973,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       for (const w of weeds) {
         const bx = w.nx * vw,
           by = w.ny * worldHeight;
-        if (by < scrollY - 120 || by > scrollY + vh + 120) continue;
+        if (by < anchorY - 120 || by > anchorY + renderH + 120) continue;
         for (let b = 0; b < 5; b++) {
           const len = 6 + (b % 3) * 2;
           for (let k = 0; k < len; k++) {
@@ -936,245 +991,251 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       }
 
       /* Crescent Moon Reflection */
-      if (moonVis > 0.03 && moonY - 40 < scrollY + vh) {
+      if (moonVis > 0.03 && moonY - 40 < anchorY + renderH) {
         const mr = 34;
         const x0 = Math.max(0, Math.floor((moonX - mr) / cw)),
           x1 = Math.min(cols - 1, Math.floor((moonX + mr) / cw));
-        const y0 = Math.max(0, Math.floor((moonY - scrollY - mr) / chh)),
-          y1 = Math.min(rows - 1, Math.floor((moonY - scrollY + mr) / chh));
+        const y0 = Math.max(0, Math.floor((moonY - anchorY - mr) / chh)),
+          y1 = Math.min(rows - 1, Math.floor((moonY - anchorY + mr) / chh));
         ctx.globalAlpha = moonVis * 0.72;
-        glowCtx.fillStyle = "#B9DCFF";
         glowCtx.globalAlpha = moonVis * 0.9;
         for (let cy = y0; cy <= y1; cy++) {
           const wob = Math.sin(time * 2.2 + cy * 0.9) * 3.5;
           for (let cx = x0; cx <= x1; cx++) {
             const dx = ((cx + 0.5) * cw - (moonX + wob)) / mr;
-            const dy = (scrollY + (cy + 0.5) * chh - moonY) / (mr * 0.88);
+            const dy = (anchorY + (cy + 0.5) * chh - moonY) / (mr * 0.88);
             const d = Math.hypot(dx, dy);
             const cut = Math.hypot(dx - 0.36, dy + 0.14);
             if (d < 1 && cut > 0.78) {
-              const ch = d > 0.84 ? (dx < 0 ? "(" : ")") : cut < 0.9 ? ":" : "o";
-              stampGlyph(ctx, ch, "glintBright", cx * cw, scrollY + cy * chh);
-              glowCtx.fillText(ch, cx * cw, scrollY + cy * chh);
+              const ch =
+                d > 0.84 ? (dx < 0 ? "(" : ")") : cut < 0.9 ? ":" : "o";
+              stampGlyph(ctx, ch, "glintBright", cx * cw, anchorY + cy * chh);
+              stampGlyph(
+                glowCtx,
+                ch,
+                "glintBright",
+                cx * cw,
+                anchorY + cy * chh
+              );
             }
           }
         }
       }
 
       /* Sun Reflection */
-      if (sunVis > 0.03 && sunY - 60 < scrollY + vh) {
+      if (sunVis > 0.03 && sunY - 60 < anchorY + renderH) {
         const sr = 42;
         const x0 = Math.max(0, Math.floor((sunX - sr * 1.4) / cw)),
           x1 = Math.min(cols - 1, Math.floor((sunX + sr * 1.4) / cw));
-        const y0 = Math.max(0, Math.floor((sunY - scrollY - sr * 1.4) / chh)),
-          y1 = Math.min(rows - 1, Math.floor((sunY - scrollY + sr * 1.4) / chh));
+        const y0 = Math.max(0, Math.floor((sunY - anchorY - sr * 1.4) / chh)),
+          y1 = Math.min(
+            rows - 1,
+            Math.floor((sunY - anchorY + sr * 1.4) / chh)
+          );
         ctx.globalAlpha = sunVis * 0.85;
-        glowCtx.fillStyle = "#FFF6CC";
         glowCtx.globalAlpha = sunVis * 0.95;
         for (let cy = y0; cy <= y1; cy++) {
           const wob = Math.sin(time * 2.5 + cy * 0.85) * 3.0;
           for (let cx = x0; cx <= x1; cx++) {
             const dx = ((cx + 0.5) * cw - (sunX + wob)) / sr;
-            const dy = (scrollY + (cy + 0.5) * chh - sunY) / (sr * 0.86);
+            const dy = (anchorY + (cy + 0.5) * chh - sunY) / (sr * 0.86);
             const d = Math.hypot(dx, dy);
             if (d < 0.78) {
               const ch = d < 0.42 ? "@" : d < 0.62 ? "*" : "o";
-              stampGlyph(ctx, ch, "glintBright", cx * cw, scrollY + cy * chh);
-              glowCtx.fillText(ch, cx * cw, scrollY + cy * chh);
+              stampGlyph(ctx, ch, "glintBright", cx * cw, anchorY + cy * chh);
+              stampGlyph(
+                glowCtx,
+                ch,
+                "glintBright",
+                cx * cw,
+                anchorY + cy * chh
+              );
             } else if (d < 1.32) {
               const an = Math.atan2(dy, dx);
               const ray = Math.sin(an * 8 + time * 1.5);
               if (ray > 0.65) {
                 const ch = d < 1.05 ? "+" : "~";
-                stampGlyph(ctx, ch, "glintBright", cx * cw, scrollY + cy * chh);
-                glowCtx.fillText(ch, cx * cw, scrollY + cy * chh);
+                stampGlyph(ctx, ch, "glintBright", cx * cw, anchorY + cy * chh);
+                stampGlyph(
+                  glowCtx,
+                  ch,
+                  "glintBright",
+                  cx * cw,
+                  anchorY + cy * chh
+                );
               }
             }
           }
         }
       }
 
+      /* Precompute Column Trig Lookup Tables Once Per Frame (95% Fewer Math Calls) */
+      for (let x = 0; x < cols; x++) {
+        const px = colPx[x];
+        colSin1[x] = Math.sin(px * 0.011 - time * 0.3) * 1.1;
+        colU[x] = px * 0.016;
+        colBand[x] = px * 0.03;
+        colSpA[x] = px * 0.9 + time * 3.1;
+        colSpB[x] = px * 0.37 - time * 2.3;
+      }
+
       /* Water Ripples + Spreading Illumination Cone + Stone Shoreline Meniscus */
       const maxPondDepth = Math.max(worldHeight * 0.92, vh * 2.2);
-      const visibleStones = shoreStones.filter(
-        (s) => s.y + s.ry * 1.25 >= scrollY && s.y - s.ry * 1.25 <= scrollY + vh
+      const visibleStones = stones.filter(
+        (s) =>
+          s.y + s.shoreRy * 1.25 >= anchorY &&
+          s.y - s.shoreRy * 1.25 <= anchorY + renderH
       );
+      const nightBaseScale = 0.24 * (1 - tmix);
+      const dayBaseScale = 0.64 * tmix;
 
       for (let y = 0; y < rows; y++) {
-        let r1 = "",
-          r2 = "",
-          r3 = "",
-          h1 = false,
-          h2 = false,
-          h3 = false;
-        const py = scrollY + (y + 0.5) * chh;
+        const rowY = anchorY + y * chh;
+        const py = rowY + 0.5 * chh;
         const swayY = Math.sin(py * 0.008 + time * 0.6) * 14;
         const moonColX = moonX + swayY;
         const sunColX = sunX + swayY;
 
-        // Normalized depth from top of pond to bottom (0 -> 1)
         const moonDepth = Math.max(0, py - moonY) / maxPondDepth;
-        // Illumination cone spreads outward as it travels deeper into the pond
-        const moonSpread = vw * (0.16 + Math.pow(moonDepth, 0.72) * 0.58);
-        // Gradual attenuation so pond darkens smoothly toward the bottom
+        const invMoonSpread =
+          1 / (vw * (0.16 + Math.pow(moonDepth, 0.72) * 0.58));
         const moonAtten = Math.pow(Math.max(0.05, 1 - moonDepth * 0.84), 1.35);
         const belowMoon =
           py >= moonY - 12 ? 1 : Math.max(0, 1 - (moonY - py) / 40);
+        const moonRowGain = moonVis * belowMoon * moonAtten;
 
         const sunDepth = Math.max(0, py - sunY) / maxPondDepth;
-        const sunSpread = vw * (0.18 + Math.pow(sunDepth, 0.72) * 0.58);
+        const invSunSpread =
+          1 / (vw * (0.18 + Math.pow(sunDepth, 0.72) * 0.58));
         const sunAtten = Math.pow(Math.max(0.06, 1 - sunDepth * 0.82), 1.3);
         const belowSun =
           py >= sunY - 12 ? 1 : Math.max(0, 1 - (sunY - py) / 40);
+        const sunRowGain = sunVis * belowSun * sunAtten;
 
-        // Broad ambient surface shimmer that fades gently toward pond bottom
         const ambientDepthFade = Math.max(
           0.08,
           1 - Math.max(0, py) / maxPondDepth
         );
+        const nightAmbient = nightBaseScale * ambientDepthFade;
+        const dayAmbient = dayBaseScale * ambientDepthFade;
 
         const rowStones = visibleStones.filter(
-          (s) => Math.abs(py - s.y) <= s.ry * 1.15
+          (s) => Math.abs(py - s.y) <= s.shoreRy * 1.15
         );
 
+        const sinPyWave = Math.sin(py * 0.012 + time * 0.35) * 1.1;
+        const pyV = py * 0.021;
+        const pyBand = py * 0.08 + time * 0.7;
+        const sinPyBand = Math.sin(py * 0.1 - time * 0.5);
+        const pySpA = py * 0.7;
+        const pySpB = -py * 1.3;
+
         for (let x = 0; x < cols; x++) {
-          const px = (x + 0.5) * cw;
-          const u = px * 0.016 + Math.sin(py * 0.012 + time * 0.35) * 1.1;
-          const v = py * 0.021 + Math.cos(px * 0.011 - time * 0.3) * 1.1;
+          const px = colPx[x];
+          const u = colU[x] + sinPyWave;
+          const v = pyV + colSin1[x];
           const a = Math.sin(
             u * 2.1 + time * 0.45 + Math.sin(v * 1.7 - time * 0.3) * 1.3
           );
           const b = Math.sin(
             v * 2.3 - time * 0.38 + Math.sin(u * 1.4 + time * 0.27) * 1.3
           );
-          const x1 = 1 - Math.abs(a + b) * 0.5,
-            x2 = x1 * x1,
-            rd = x2 * x2;
-          const band = Math.max(
-            0,
-            Math.sin(px * 0.03 + py * 0.08 + time * 0.7) *
-              Math.sin(py * 0.1 - time * 0.5)
-          );
+          const x1 = 1 - Math.abs(a + b) * 0.5;
+          const x2 = x1 * x1;
+          const rd = x2 * x2;
+          const band = Math.max(0, Math.sin(colBand[x] + pyBand) * sinPyBand);
           const m = Math.max(rd, band * 0.5);
 
-          const gMoon =
-            Math.exp(-(((px - moonColX) / moonSpread) ** 2)) *
-            moonVis *
-            belowMoon *
-            moonAtten;
-          const gSun =
-            Math.exp(-(((px - sunColX) / sunSpread) ** 2)) *
-            sunVis *
-            belowSun *
-            sunAtten;
+          const dm = (px - moonColX) * invMoonSpread;
+          const ds = (px - sunColX) * invSunSpread;
+          const gMoon = moonRowGain > 0.002 ? fastGauss(dm * dm) * moonRowGain : 0;
+          const gSun = sunRowGain > 0.002 ? fastGauss(ds * ds) * sunRowGain : 0;
 
           const sp = Math.max(
             0,
-            Math.sin(px * 0.9 + py * 0.7 + time * 3.1) *
-              Math.sin(px * 0.37 - py * 1.3 - time * 2.3)
+            Math.sin(colSpA[x] + pySpA) * Math.sin(colSpB[x] + pySpB)
           );
+          const sp3 = sp * sp * sp;
 
-          // Live shoreline meniscus ripple hugging every stepping stone edge
+          // Live ASCII shoreline meniscus ripple strictly outside the boulder rim
           let stoneShore = 0;
           for (let si = 0; si < rowStones.length; si++) {
             const st = rowStones[si];
-            const nx = Math.abs(px - st.x) / st.rx;
-            const ny = Math.abs(py - st.y) / st.ry;
-            const dStone = Math.pow(
-              Math.pow(nx, 4.6) + Math.pow(ny, 4.6),
-              1 / 4.6
+            const nx = Math.abs(px - st.x) / st.shoreRx;
+            if (nx > 1.15) continue;
+            const ny = Math.abs(py - st.y) / st.shoreRy;
+            if (ny > 1.15) continue;
+            const nx2 = nx * nx;
+            const ny2 = ny * ny;
+            const dStone = Math.sqrt(
+              nx2 * Math.sqrt(nx2) + ny2 * Math.sqrt(ny2)
             );
-            if (dStone >= 0.96 && dStone <= 1.1) {
+            if (dStone >= 1.02 && dStone <= 1.14) {
               const lap =
-                0.5 +
-                0.5 * Math.sin(time * 2.4 - dStone * 34 + px * 0.04);
+                0.5 + 0.5 * Math.sin(time * 2.4 - dStone * 34 + px * 0.04);
               const edgeBoost =
-                (1 - Math.abs(dStone - 1.01) / 0.09) * (0.38 + 0.34 * lap);
+                (1 - Math.abs(dStone - 1.07) / 0.07) * (0.38 + 0.34 * lap);
               if (edgeBoost > stoneShore) stoneShore = edgeBoost;
             }
           }
 
-          const nightI =
-            m * (0.24 * (1 - tmix) * ambientDepthFade + 0.92 * gMoon) +
-            sp * sp * sp * gMoon * 0.65;
-          const dayI =
-            m * (0.64 * tmix * ambientDepthFade + 0.56 * gSun) +
-            sp * sp * sp * gSun * 0.35;
-          const I = nightI + dayI + stoneShore * ambientDepthFade;
+          const I =
+            m * (nightAmbient + dayAmbient + 0.92 * gMoon + 0.56 * gSun) +
+            sp3 * (gMoon * 0.65 + gSun * 0.35) +
+            stoneShore * ambientDepthFade;
 
           if (stoneShore > 0.42) {
-            r3 += "~";
-            r2 += " ";
-            r1 += " ";
-            h3 = true;
+            ctx.globalAlpha = 0.85;
+            stampGlyph(ctx, "~", "glintBright", x * cw, rowY);
+            glowCtx.globalAlpha = 0.5;
+            stampGlyph(glowCtx, "~", "glintBright", x * cw, rowY);
           } else if (I > 0.6) {
-            r3 += "+";
-            r2 += " ";
-            r1 += " ";
-            h3 = true;
+            ctx.globalAlpha = 0.85;
+            stampGlyph(ctx, "+", "glintBright", x * cw, rowY);
+            glowCtx.globalAlpha = 0.5;
+            stampGlyph(glowCtx, "+", "glintBright", x * cw, rowY);
           } else if (I > 0.32) {
-            r2 += "-";
-            r3 += " ";
-            r1 += " ";
-            h2 = true;
+            ctx.globalAlpha = 0.56;
+            stampGlyph(ctx, "-", "glintSoft", x * cw, rowY);
           } else if (I > 0.14) {
-            r1 += ".";
-            r2 += " ";
-            r3 += " ";
-            h1 = true;
-          } else {
-            r1 += " ";
-            r2 += " ";
-            r3 += " ";
+            ctx.globalAlpha = 0.42;
+            stampGlyph(ctx, ".", "waterMid", x * cw, rowY);
           }
-        }
-        if (h1) {
-          ctx.globalAlpha = 0.42;
-          ctx.fillStyle = waterMid;
-          ctx.fillText(r1, 0, scrollY + y * chh);
-        }
-        if (h2) {
-          ctx.globalAlpha = 0.56;
-          ctx.fillStyle = glintSoft;
-          ctx.fillText(r2, 0, scrollY + y * chh);
-        }
-        if (h3) {
-          ctx.globalAlpha = 0.85;
-          ctx.fillStyle = glintBright;
-          ctx.fillText(r3, 0, scrollY + y * chh);
-          glowCtx.globalAlpha = 0.5;
-          glowCtx.fillStyle = glintBright;
-          glowCtx.fillText(r3, 0, scrollY + y * chh);
         }
       }
 
-      /* Lily Pads & Lotus Blossoms (Atlas-Stamped) */
+      /* ASCII Lily Pads & Lotus Blossoms */
       for (const pad of lilyPads) {
         const bx = pad.nx * vw,
           by = pad.ny * worldHeight;
-        if (by + pad.r * 1.3 < scrollY || by - pad.r * 1.3 > scrollY + vh)
+        if (by + pad.r * 1.3 < anchorY || by - pad.r * 1.3 > anchorY + renderH)
           continue;
         const bobY = Math.sin(time * 1.1 + pad.notch) * 1.5;
         const x0 = Math.max(0, Math.floor((bx - pad.r * 1.2) / cw)),
           x1 = Math.min(cols - 1, Math.floor((bx + pad.r * 1.2) / cw));
-        const y0 = Math.max(0, Math.floor((by - scrollY - pad.r * 1.2) / chh)),
-          y1 = Math.min(rows - 1, Math.floor((by - scrollY + pad.r * 1.2) / chh));
+        const y0 = Math.max(0, Math.floor((by - anchorY - pad.r * 1.2) / chh)),
+          y1 = Math.min(
+            rows - 1,
+            Math.floor((by - anchorY + pad.r * 1.2) / chh)
+          );
         ctx.globalAlpha = 0.8;
         for (let cy = y0; cy <= y1; cy++) {
           for (let cx = x0; cx <= x1; cx++) {
             const dx = ((cx + 0.5) * cw - bx) / pad.r;
             const dy =
-              (scrollY + (cy + 0.5) * chh - (by + bobY)) / (pad.r * 0.76);
+              (anchorY + (cy + 0.5) * chh - (by + bobY)) / (pad.r * 0.76);
             const d = Math.hypot(dx, dy);
             const an = Math.atan2(dy, dx);
-            const diff = Math.abs(((an - pad.notch + Math.PI) % 6.283) - Math.PI);
+            const diff = Math.abs(
+              ((an - pad.notch + Math.PI) % 6.283) - Math.PI
+            );
             if (d < 1 && diff > 0.24) {
               stampGlyph(
                 ctx,
                 d > 0.84 ? "o" : ".",
                 d > 0.82 ? "padRim" : "pad",
                 cx * cw,
-                scrollY + cy * chh
+                anchorY + cy * chh
               );
             }
           }
@@ -1198,7 +1259,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
         const fade = 1 - r.t / r.life,
           rad = r.t * r.speed;
-        if (r.y + rad < scrollY || r.y - rad > scrollY + vh) continue;
+        if (r.y + rad < anchorY || r.y - rad > anchorY + renderH) continue;
         ctx.lineWidth = r.wake ? 1 : 1.4;
         const rings: [number, number][] = r.wake
           ? [
@@ -1244,13 +1305,13 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           r = b.r * 1.15;
         const x0 = Math.max(0, Math.floor((ox - r) / cw)),
           x1 = Math.min(cols - 1, Math.floor((ox + r) / cw));
-        const y0 = Math.max(0, Math.floor((oy - scrollY - r) / chh)),
-          y1 = Math.min(rows - 1, Math.floor((oy - scrollY + r) / chh));
+        const y0 = Math.max(0, Math.floor((oy - anchorY - r) / chh)),
+          y1 = Math.min(rows - 1, Math.floor((oy - anchorY + r) / chh));
         for (let cy = y0; cy <= y1; cy++)
           for (let cx = x0; cx <= x1; cx++) {
             const d = Math.hypot(
               (cx + 0.5) * cw - ox,
-              scrollY + (cy + 0.5) * chh - oy
+              anchorY + (cy + 0.5) * chh - oy
             );
             if (d >= r) continue;
             const t = d / r,
@@ -1272,10 +1333,10 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
             has = true;
           } else rowStr += " ";
         }
-        if (has) ctx.fillText(rowStr, 0, scrollY + y * chh);
+        if (has) ctx.fillText(rowStr, 0, anchorY + y * chh);
       }
 
-      /* Koi Bodies */
+      /* ASCII Koi Bodies */
       ctx.globalAlpha = 1;
       glowCtx.globalAlpha = 0.85;
       for (let y = 0; y < rows; y++) {
@@ -1296,23 +1357,23 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
           if (has[q]) {
             const str = parts[q].join("");
             ctx.fillStyle = kc[q];
-            ctx.fillText(str, 0, scrollY + y * chh);
+            ctx.fillText(str, 0, anchorY + y * chh);
             glowCtx.fillStyle = kc[q];
-            glowCtx.fillText(str, 0, scrollY + y * chh);
+            glowCtx.fillText(str, 0, anchorY + y * chh);
           }
       }
 
       for (const e of eyes) {
-        if (e.y < scrollY - 20 || e.y > scrollY + vh + 20) continue;
+        if (e.y < anchorY - 20 || e.y > anchorY + renderH + 20) continue;
         const ex = Math.floor(e.x / cw) * cw,
-          ey = scrollY + Math.floor((e.y - scrollY) / chh) * chh;
+          ey = anchorY + Math.floor((e.y - anchorY) / chh) * chh;
         ctx.fillStyle = bgTop;
         ctx.fillRect(ex, ey, cw, chh);
         ctx.fillStyle = eyeColor;
         ctx.fillText("o", ex, ey);
       }
 
-      /* Food Pellets & Sparks */
+      /* ASCII Food Pellets & Sparks */
       for (let i = foods.length - 1; i >= 0; i--) {
         const f = foods[i];
         f.age += dt;
@@ -1350,21 +1411,24 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         stampGlyph(glowCtx, ch, "food", sx, sy);
       }
 
-      /* Mossy Shoreline Stones & Pond-Edge Grass (Atlas-Stamped) */
+      /* Mossy Shoreline Stones & Pond-Edge Grass (ASCII Atlas-Stamped) */
       for (const b of bankStones) {
         const bx = b.nx * vw,
           by = b.ny * worldHeight;
-        if (by + b.ry * 1.3 < scrollY || by - b.ry * 1.3 > scrollY + vh)
+        if (by + b.ry * 1.3 < anchorY || by - b.ry * 1.3 > anchorY + renderH)
           continue;
         const cx0 = Math.max(0, Math.floor((bx - b.rx * 1.2) / cw)),
           cx1 = Math.min(cols - 1, Math.floor((bx + b.rx * 1.2) / cw));
-        const cy0 = Math.max(0, Math.floor((by - scrollY - b.ry * 1.2) / chh)),
-          cy1 = Math.min(rows - 1, Math.floor((by - scrollY + b.ry * 1.2) / chh));
+        const cy0 = Math.max(0, Math.floor((by - anchorY - b.ry * 1.2) / chh)),
+          cy1 = Math.min(
+            rows - 1,
+            Math.floor((by - anchorY + b.ry * 1.2) / chh)
+          );
         ctx.globalAlpha = 0.85;
         for (let cy = cy0; cy <= cy1; cy++) {
           for (let cx = cx0; cx <= cx1; cx++) {
             const dx = ((cx + 0.5) * cw - bx) / b.rx,
-              dy = (scrollY + (cy + 0.5) * chh - by) / b.ry;
+              dy = (anchorY + (cy + 0.5) * chh - by) / b.ry;
             const d = Math.hypot(dx, dy),
               an = Math.atan2(dy, dx);
             const edge =
@@ -1385,7 +1449,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
                 ch,
                 isMoss ? "moss" : "rock",
                 cx * cw,
-                scrollY + cy * chh
+                anchorY + cy * chh
               );
             }
           }
@@ -1396,7 +1460,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
       for (const tuft of grassTufts) {
         const bx = tuft.nx * vw,
           by = tuft.ny * worldHeight;
-        if (by + 40 < scrollY || by - tuft.h * chh - 40 > scrollY + vh)
+        if (by + 40 < anchorY || by - tuft.h * chh - 40 > anchorY + renderH)
           continue;
         for (let b = 0; b < tuft.blades; b++) {
           const offset = (b - (tuft.blades - 1) / 2) * cw * 1.25;
@@ -1412,7 +1476,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
               Math.floor((bx + offset + lean * k * cw * 0.7 + breeze) / cw) *
               cw;
             const gy = Math.floor((by - k * chh) / chh) * chh;
-            if (gx < 0 || gx >= vw || gy < scrollY || gy >= scrollY + vh)
+            if (gx < 0 || gx >= vw || gy < anchorY || gy >= anchorY + renderH)
               continue;
             const ch =
               k === height - 1
@@ -1433,8 +1497,8 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
-      /* Upper-Corner Bamboo Groves */
-      if (vw >= 768 && scrollY < 480) {
+      /* ASCII Bamboo Groves */
+      if (vw >= 768 && anchorY < 480) {
         for (const grove of bambooClusters) {
           const baseX = grove.nx * vw;
           const isLeft = grove.nx < 0.5;
@@ -1443,7 +1507,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
             const rowsLen = grove.lenRows - s * 2;
             for (let r = 0; r < rowsLen; r++) {
               const py = grove.topY + r * chh;
-              if (py < scrollY || py > scrollY + vh) continue;
+              if (py < anchorY || py > anchorY + renderH) continue;
               const sway =
                 Math.sin(time * 0.85 + grove.ph + s * 0.6 + r * 0.08) *
                 (r * 0.35);
@@ -1473,7 +1537,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
-      /* Traditional Stone Tōrō Lanterns & Shimmering Water Reflections */
+      /* Traditional ASCII Stone Tōrō Lanterns & Shimmering Water Reflections */
       if (vw >= 640) {
         const lanternArt = [
           "  /^\\  ",
@@ -1493,7 +1557,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
               ? lantern.yPx
               : lantern.ny! * worldHeight;
 
-          if (ly < scrollY - 120 || ly > scrollY + vh + 160) continue;
+          if (ly < anchorY - 120 || ly > anchorY + renderH + 160) continue;
 
           const fireX = lx + cw * 3.5;
           const fireY = ly + chh * 2.5;
@@ -1533,7 +1597,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
 
           for (let refRow = 1; refRow <= 6; refRow++) {
             const ry = ly + (lanternArt.length + refRow) * chh;
-            if (ry < scrollY || ry > scrollY + vh) continue;
+            if (ry < anchorY || ry > anchorY + renderH) continue;
             const wob = Math.sin(time * 2.4 + refRow * 1.1) * 3.5;
             const al = (1 - refRow / 7) * (0.48 - tmix * 0.28) * flicker;
             ctx.globalAlpha = Math.max(0, al);
@@ -1548,14 +1612,14 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
         }
       }
 
-      /* Fast Hardware-Upscaled Phosphor Bloom (Zero CPU ctx.filter Overhead) */
+      /* Hardware-Upscaled Phosphor Bloom */
       ctx.save();
       ctx.imageSmoothingEnabled = true;
       ctx.globalCompositeOperation = tmix < 0.5 ? "lighter" : "screen";
       ctx.globalAlpha = 0.58 * (1 - tmix * 0.35);
-      ctx.drawImage(glowCanvas, 0, scrollY, vw, vh);
+      ctx.drawImage(glowCanvas, 0, anchorY, vw, renderH);
       ctx.globalAlpha = 0.34 * (1 - tmix * 0.42);
-      ctx.drawImage(glowCanvas, -4, scrollY - 3, vw + 8, vh + 6);
+      ctx.drawImage(glowCanvas, -4, anchorY - 3, vw + 8, renderH + 6);
       ctx.restore();
 
       ctx.globalAlpha = 1;
@@ -1566,7 +1630,7 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
 
     return () => {
       cancelAnimationFrame(raf);
-      canvas.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointermove", onMove);
       window.removeEventListener("resize", onResize);
       worldObserver.disconnect();
@@ -1576,8 +1640,8 @@ export default function KoiPondCanvas({ theme }: { theme: Theme }) {
   return (
     <canvas
       ref={ref}
-      className="fixed inset-0 z-0 block cursor-crosshair"
-      aria-label="Interactive ASCII koi garden pond. Click to feed the koi."
+      className="pointer-events-none absolute top-0 left-0 block will-change-transform"
+      aria-label="Interactive ASCII koi garden pond. Click water to feed the koi."
     />
   );
 }

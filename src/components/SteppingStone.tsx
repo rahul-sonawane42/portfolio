@@ -1,97 +1,174 @@
 import { useEffect, useRef } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { Theme } from "./ThemeToggle";
 
 interface SteppingStoneProps {
   children?: ReactNode;
   className?: string;
+  style?: CSSProperties;
   id?: string;
   title?: string;
   subtitle?: string;
   variant?: number;
   align?: "center" | "left" | "right";
   theme?: Theme;
-  /** Compact padding & no outer koi collider when used inside a flagstone cluster */
-  inCluster?: boolean;
-  /** Uncarved decorative accent stone (sutegishi) tucked into cluster gaps */
+  /** Compact header stone padding */
+  compact?: boolean;
+  /** Uncarved fixed-dimension decorative accent pebble (sutegishi) */
   decorative?: boolean;
-  minHeight?: number;
 }
 
-interface Pt {
-  x: number;
-  y: number;
-}
+const stonePatternCache = new Map<string, CanvasPattern | null>();
 
-function mulberry32(seed: number) {
-  let a = seed >>> 0;
+function seededRandom(seed: number) {
+  let s = seed % 2147483647;
+  if (s <= 0) s += 2147483646;
   return () => {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
   };
 }
 
-/* Broad, flat-shouldered quarried river flagstone exponent */
-const BOULDER_EXPONENT = 4.6;
-
-function buildBoulderPolygon(
-  cx: number,
-  cy: number,
-  rx: number,
-  ry: number,
+function getStoneTexturePattern(
+  ctx: CanvasRenderingContext2D,
+  theme: Theme,
   variant: number
-): Pt[] {
-  const rand = mulberry32(4109 + variant * 977);
-  const steps = 44;
-  const p = BOULDER_EXPONENT;
-  const phases = [
-    rand() * Math.PI * 2,
-    rand() * Math.PI * 2,
-    rand() * Math.PI * 2,
-  ];
-  const pts: Pt[] = [];
-
-  for (let i = 0; i < steps; i++) {
-    const theta = (i / steps) * Math.PI * 2;
-    const cosT = Math.cos(theta);
-    const sinT = Math.sin(theta);
-
-    const sx = Math.sign(cosT) * Math.pow(Math.abs(cosT), 2 / p);
-    const sy = Math.sign(sinT) * Math.pow(Math.abs(sinT), 2 / p);
-
-    const facet =
-      1 +
-      0.018 * Math.sin(3 * theta + phases[0]) +
-      0.012 * Math.cos(5 * theta + phases[1]) +
-      0.007 * Math.sin(9 * theta + phases[2]) +
-      (rand() - 0.5) * 0.006;
-
-    pts.push({
-      x: cx + sx * rx * facet,
-      y: cy + sy * ry * facet,
-    });
+): CanvasPattern | null {
+  const key = `${theme}:${variant}:v2`;
+  if (stonePatternCache.has(key)) {
+    return stonePatternCache.get(key) ?? null;
   }
-  return pts;
+
+  const tile = document.createElement("canvas");
+  tile.width = 256;
+  tile.height = 256;
+  const tctx = tile.getContext("2d");
+  if (!tctx) return null;
+
+  const isDark = theme === "dark";
+  const rng = seededRandom((isDark ? 9187 : 4421) + variant * 131);
+
+  // Rich river basalt / Shirakawa granite base
+  tctx.fillStyle = isDark ? "#23282e" : "#dbd8cf";
+  tctx.fillRect(0, 0, 256, 256);
+
+  // Soft mineral cloud mottling for natural geological depth
+  for (let c = 0; c < 42; c++) {
+    const cx = rng() * 256;
+    const cy = rng() * 256;
+    const cr = 18 + rng() * 34;
+    const grad = tctx.createRadialGradient(cx, cy, 1, cx, cy, cr);
+    if (isDark) {
+      grad.addColorStop(
+        0,
+        rng() < 0.5 ? "rgba(12, 15, 19, 0.22)" : "rgba(56, 64, 72, 0.16)"
+      );
+      grad.addColorStop(1, "rgba(35, 40, 46, 0)");
+    } else {
+      grad.addColorStop(
+        0,
+        rng() < 0.5 ? "rgba(155, 154, 148, 0.18)" : "rgba(255, 254, 250, 0.24)"
+      );
+      grad.addColorStop(1, "rgba(219, 216, 207, 0)");
+    }
+    tctx.fillStyle = grad;
+    tctx.beginPath();
+    tctx.arc(cx, cy, cr, 0, Math.PI * 2);
+    tctx.fill();
+  }
+
+  // Multi-octave mineral grain: feldspar, quartz, dark biotite & crystalline mica flecks
+  for (let i = 0; i < 3200; i++) {
+    const x = rng() * 256;
+    const y = rng() * 256;
+    const r = 0.55 + rng() * 2.05;
+    const kind = rng();
+
+    if (isDark) {
+      if (kind < 0.44) {
+        tctx.fillStyle = `rgba(10, 13, 17, ${0.22 + rng() * 0.28})`;
+      } else if (kind < 0.84) {
+        tctx.fillStyle = `rgba(68, 76, 86, ${0.15 + rng() * 0.22})`;
+      } else {
+        tctx.fillStyle = `rgba(218, 228, 238, ${0.1 + rng() * 0.16})`;
+      }
+    } else {
+      if (kind < 0.44) {
+        tctx.fillStyle = `rgba(88, 92, 96, ${0.14 + rng() * 0.2})`;
+      } else if (kind < 0.84) {
+        tctx.fillStyle = `rgba(255, 255, 255, ${0.24 + rng() * 0.3})`;
+      } else {
+        tctx.fillStyle = `rgba(38, 42, 46, ${0.2 + rng() * 0.24})`;
+      }
+    }
+
+    tctx.beginPath();
+    tctx.arc(x, y, r, 0, Math.PI * 2);
+    tctx.fill();
+  }
+
+  const pattern = ctx.createPattern(tile, "repeat");
+  stonePatternCache.set(key, pattern);
+  return pattern;
 }
 
-function tracePoly(
+function createOrganicStonePath(
   ctx: CanvasRenderingContext2D,
-  pts: Pt[],
-  ox = 0,
-  oy = 0,
-  scale = 1,
-  cx = 0,
-  cy = 0
+  w: number,
+  h: number,
+  seed: number,
+  isPebble: boolean,
+  extraInset = 0
 ) {
+  const rng = seededRandom(seed);
+  const padX = (isPebble ? 7 : 12) + extraInset;
+  const padY = (isPebble ? 7 : 11) + extraInset;
+  const rx = Math.max(4, (w - padX * 2) * 0.5);
+  const ry = Math.max(4, (h - padY * 2) * 0.5);
+  const cx = w * 0.5;
+  const cy = h * 0.5;
+
+  // Authentic organic river-boulder superellipse curve
+  const n = isPebble ? 2.25 : 3.15;
+  const segments = isPebble ? 28 : 52;
+  const pts: { x: number; y: number }[] = [];
+  const p0 = rng() * Math.PI * 2;
+  const p1 = rng() * Math.PI * 2;
+  const p2 = rng() * Math.PI * 2;
+  const p3 = rng() * Math.PI * 2;
+
+  for (let i = 0; i < segments; i++) {
+    const theta = (i / segments) * Math.PI * 2;
+    const cosT = Math.cos(theta);
+    const sinT = Math.sin(theta);
+    const superR = Math.pow(
+      Math.pow(Math.abs(cosT), n) + Math.pow(Math.abs(sinT), n),
+      -1 / n
+    );
+    const wobble =
+      1 +
+      0.015 * Math.sin(2 * theta + p0) +
+      0.022 * Math.sin(3 * theta + p1) +
+      0.014 * Math.cos(5 * theta + p2) +
+      0.008 * Math.sin(7 * theta + p3);
+
+    pts.push({
+      x: cx + cosT * rx * superR * wobble,
+      y: cy + sinT * ry * superR * wobble,
+    });
+  }
+
   ctx.beginPath();
   for (let i = 0; i < pts.length; i++) {
-    const px = cx + (pts[i].x - cx) * scale + ox;
-    const py = cy + (pts[i].y - cy) * scale + oy;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
+    const curr = pts[i];
+    const next = pts[(i + 1) % pts.length];
+    const midX = (curr.x + next.x) * 0.5;
+    const midY = (curr.y + next.y) * 0.5;
+    if (i === 0) {
+      const prev = pts[pts.length - 1];
+      ctx.moveTo((prev.x + curr.x) * 0.5, (prev.y + curr.y) * 0.5);
+    }
+    ctx.quadraticCurveTo(curr.x, curr.y, midX, midY);
   }
   ctx.closePath();
 }
@@ -99,18 +176,17 @@ function tracePoly(
 export default function SteppingStone({
   children,
   className = "",
+  style,
   id,
   title,
   subtitle,
   variant = 0,
   align = "center",
   theme = "dark",
-  inCluster = false,
+  compact = false,
   decorative = false,
-  minHeight = 96,
 }: SteppingStoneProps) {
   const articleRef = useRef<HTMLElement>(null);
-  const measureRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -118,334 +194,165 @@ export default function SteppingStone({
     const canvas = canvasRef.current;
     if (!article || !canvas) return;
 
-    const padX = 36;
-    const padTop = 28;
-    const padBottom = 46;
-
-    const updateAndRender = () => {
-      const w = article.offsetWidth;
-      if (w <= 0) return;
-
-      // 1. Closed-Form Inscribed Safe Padding (Compact Caps + Zero Overflow)
-      if (!decorative && measureRef.current) {
-        const innerW = measureRef.current.offsetWidth;
-        const innerH = measureRef.current.offsetHeight;
-
-        if (innerW > 0 && innerH > 0) {
-          const safeScale = 0.86;
-          const rxSafe = (w / 2 + 16) * safeScale;
-          const u = Math.min(0.92, innerW / 2 / rxSafe);
-          const alpha = Math.pow(
-            Math.max(0.15, 1 - Math.pow(u, BOULDER_EXPONENT)),
-            1 / BOULDER_EXPONENT
-          );
-
-          const minPadY = inCluster ? 24 : 34;
-          const requiredH = Math.max(
-            innerH + minPadY * 2,
-            innerH / (alpha * safeScale) - 24
-          );
-          const padY = Math.ceil((requiredH - innerH) / 2);
-          article.style.setProperty("--stone-pad-y", `${padY}px`);
-        }
-      }
-
-      const h = article.offsetHeight;
-      if (h <= 0) return;
-
-      const cw = w + padX * 2;
-      const ch = h + padTop + padBottom;
+    const renderStone = () => {
+      const rect = article.getBoundingClientRect();
+      const w = Math.max(10, Math.round(rect.width));
+      const h = Math.max(10, Math.round(rect.height));
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-      canvas.width = Math.round(cw * dpr);
-      canvas.height = Math.round(ch * dpr);
-      canvas.style.width = `${cw}px`;
-      canvas.style.height = `${ch}px`;
-      canvas.style.left = `${-padX}px`;
-      canvas.style.top = `${-padTop}px`;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
 
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, cw, ch);
+      ctx.clearRect(0, 0, w, h);
 
-      const isLight = theme === "light";
-      const cx = cw / 2;
-      const cy = padTop + h / 2;
-      const rx = w / 2 + 16;
-      const ry = h / 2 + 14;
-      const pts = buildBoulderPolygon(cx, cy, rx, ry, variant);
+      const seed = 101 + variant * 97;
+      const rng = seededRandom(seed);
+      const isDark = theme === "dark";
 
-      // 1. Soft Blended Underwater Pond Shadow (Stitches Stone Into Water Column)
+      // 1. Soft Submerged Waterline Ambient Occlusion & Shadow
       ctx.save();
-      ctx.shadowColor = isLight
-        ? "rgba(24, 58, 74, 0.34)"
-        : "rgba(0, 0, 0, 0.84)";
-      ctx.shadowBlur = 24;
-      ctx.shadowOffsetY = 12;
-      tracePoly(ctx, pts, 0, 18, 1.015, cx, cy);
-      ctx.fillStyle = isLight
-        ? "rgba(32, 68, 84, 0.28)"
-        : "rgba(0, 0, 0, 0.68)";
+      ctx.translate(0, 7);
+      createOrganicStonePath(ctx, w, h, seed, decorative);
+      ctx.fillStyle = isDark
+        ? "rgba(2, 5, 8, 0.78)"
+        : "rgba(20, 48, 44, 0.32)";
+      ctx.filter = "blur(7px)";
       ctx.fill();
       ctx.restore();
 
-      // 2. Submerged Translucent Wet Collar (Blends Seamlessly Into Pond Bed)
-      const collarGrad = ctx.createLinearGradient(0, cy - ry, 0, cy + ry + 24);
-      if (isLight) {
-        collarGrad.addColorStop(0, "rgba(86, 118, 128, 0.25)");
-        collarGrad.addColorStop(0.65, "rgba(72, 102, 112, 0.58)");
-        collarGrad.addColorStop(1, "rgba(56, 86, 98, 0.72)");
-      } else {
-        collarGrad.addColorStop(0, "rgba(10, 18, 26, 0.32)");
-        collarGrad.addColorStop(0.65, "rgba(7, 13, 20, 0.72)");
-        collarGrad.addColorStop(1, "rgba(4, 8, 14, 0.88)");
-      }
-      tracePoly(ctx, pts, 0, 22, 1.01, cx, cy);
-      ctx.fillStyle = collarGrad;
-      ctx.fill();
-
-      // 3. Chiseled 3D Vertical Rock Thickness / Side Wall (16px height)
-      const sideGrad = ctx.createLinearGradient(0, 0, cw, 0);
-      if (isLight) {
-        sideGrad.addColorStop(0, "#8a857a");
-        sideGrad.addColorStop(0.28, "#b0aba0");
-        sideGrad.addColorStop(0.72, "#827d73");
-        sideGrad.addColorStop(1, "#635f56");
-      } else {
-        sideGrad.addColorStop(0, "#171c21");
-        sideGrad.addColorStop(0.28, "#293038");
-        sideGrad.addColorStop(0.72, "#15191e");
-        sideGrad.addColorStop(1, "#0c0f12");
-      }
-
-      for (let dy = 16; dy >= 2; dy -= 2) {
-        tracePoly(ctx, pts, 0, dy);
-        ctx.fillStyle = sideGrad;
-        ctx.fill();
-      }
-
-      // Vertical Cleavage Facets & Water-Bounce Rim Along Lower Rock Wall
+      // 2. 3D Quarried Rock Sidewall Thickness Skirt
       ctx.save();
-      tracePoly(ctx, pts, 0, 16);
+      ctx.translate(0, 4);
+      createOrganicStonePath(ctx, w, h, seed, decorative);
+      ctx.fillStyle = isDark ? "#0d1116" : "#8b8f94";
+      ctx.fill();
+      ctx.restore();
+
+      // 3. Main River Boulder Body + Cached Mineral Texture
+      ctx.save();
+      createOrganicStonePath(ctx, w, h, seed, decorative);
       ctx.clip();
-      const randCleavage = mulberry32(9001 + variant * 313);
-      for (
-        let x = padX - 10;
-        x < cw - padX + 10;
-        x += 18 + randCleavage() * 22
-      ) {
+
+      const pattern = getStoneTexturePattern(ctx, theme, variant);
+      if (pattern) {
+        ctx.fillStyle = pattern;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      // Directional 3D Rock Illumination Gradient
+      const lightGrad = ctx.createLinearGradient(0, 0, w * 0.28, h);
+      if (isDark) {
+        lightGrad.addColorStop(0, "rgba(175, 202, 224, 0.16)");
+        lightGrad.addColorStop(0.45, "rgba(34, 40, 46, 0.12)");
+        lightGrad.addColorStop(1, "rgba(7, 10, 14, 0.6)");
+      } else {
+        lightGrad.addColorStop(0, "rgba(255, 253, 248, 0.52)");
+        lightGrad.addColorStop(0.55, "rgba(224, 220, 212, 0.12)");
+        lightGrad.addColorStop(1, "rgba(124, 128, 134, 0.38)");
+      }
+      ctx.fillStyle = lightGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // 4. Natural Geological Fracture Veins (Quartz / Basalt Fissures)
+      const veinCount = decorative ? 1 : 3;
+      for (let v = 0; v < veinCount; v++) {
+        let vx = (0.15 + rng() * 0.7) * w;
+        let vy = rng() < 0.5 ? 0 : h;
+        const dirY = vy === 0 ? 1 : -1;
         ctx.beginPath();
-        ctx.moveTo(x, cy + ry - 30);
-        ctx.lineTo(x + (randCleavage() - 0.5) * 7, cy + ry + 20);
-        ctx.strokeStyle =
-          randCleavage() > 0.45
-            ? isLight
-              ? "rgba(42, 39, 34, 0.32)"
-              : "rgba(0, 0, 0, 0.62)"
-            : isLight
-              ? "rgba(255, 255, 255, 0.38)"
-              : "rgba(210, 224, 238, 0.14)";
+        ctx.moveTo(vx, vy);
+        const steps = 6;
+        for (let s = 1; s <= steps; s++) {
+          vx += (rng() - 0.5) * (w * 0.12);
+          vy += dirY * (h / steps) * (0.7 + rng() * 0.5);
+          ctx.lineTo(vx, vy);
+        }
+        ctx.strokeStyle = isDark
+          ? "rgba(8, 10, 13, 0.48)"
+          : "rgba(84, 88, 92, 0.24)";
         ctx.lineWidth = 1.25;
         ctx.stroke();
+
+        ctx.strokeStyle = isDark
+          ? "rgba(186, 204, 220, 0.09)"
+          : "rgba(255, 255, 255, 0.48)";
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
       }
 
-      // Cool pond-water light reflection bouncing onto the lower wet rock wall
-      const bounceGrad = ctx.createLinearGradient(0, cy + ry - 12, 0, cy + ry + 18);
-      bounceGrad.addColorStop(0, "rgba(0, 0, 0, 0)");
-      bounceGrad.addColorStop(
-        1,
-        isLight ? "rgba(210, 242, 255, 0.36)" : "rgba(110, 164, 214, 0.18)"
-      );
-      ctx.fillStyle = bounceGrad;
-      ctx.fillRect(0, cy + ry - 12, cw, 32);
-      ctx.restore();
-
-      // 4. Flat Opaque Top River-Granite Face
-      const topGrad = ctx.createLinearGradient(
-        padX,
-        padTop,
-        cw - padX,
-        ch - padBottom
-      );
-      if (isLight) {
-        topGrad.addColorStop(0, "#ece8df");
-        topGrad.addColorStop(0.45, "#dfd9ce");
-        topGrad.addColorStop(1, "#cbc5b9");
-      } else {
-        topGrad.addColorStop(0, "#333941");
-        topGrad.addColorStop(0.48, "#262b31");
-        topGrad.addColorStop(1, "#1b1f24");
-      }
-
-      tracePoly(ctx, pts, 0, 0);
-      ctx.fillStyle = topGrad;
-      ctx.fill();
-
-      // 5. Multi-Scale Geological Stone Texture
-      ctx.save();
-      tracePoly(ctx, pts, 0, 0);
-      ctx.clip();
-
-      const rand = mulberry32(7717 + variant * 521);
-      const area = cw * ch;
-
-      // 5a. Coarse Mineral Mottling Patches
-      const patchCount = Math.min(260, Math.floor(area * 0.00055));
-      for (let i = 0; i < patchCount; i++) {
-        const px = rand() * cw;
-        const py = rand() * ch;
-        const prx = 4 + rand() * 11;
-        const pry = 3 + rand() * 8;
-        const rot = rand() * Math.PI;
-        const darkPatch = rand() > 0.48;
-
-        ctx.beginPath();
-        ctx.ellipse(px, py, prx, pry, rot, 0, Math.PI * 2);
-        ctx.fillStyle = darkPatch
-          ? isLight
-            ? `rgba(68, 62, 54, ${0.045 + rand() * 0.055})`
-            : `rgba(8, 10, 14, ${0.14 + rand() * 0.16})`
-          : isLight
-            ? `rgba(255, 253, 248, ${0.12 + rand() * 0.14})`
-            : `rgba(188, 202, 218, ${0.035 + rand() * 0.045})`;
-        ctx.fill();
-      }
-
-      // 5b. High-Density Crystalline Grit
-      const speckCount = Math.min(7200, Math.floor(area * 0.018));
-      for (let i = 0; i < speckCount; i++) {
-        const sx = rand() * cw;
-        const sy = rand() * ch;
-        const size = 0.75 + rand() * 1.85;
-        const kind = rand();
-
-        if (kind < 0.48) {
-          ctx.fillStyle = isLight
-            ? `rgba(48, 44, 38, ${0.08 + rand() * 0.14})`
-            : `rgba(6, 8, 11, ${0.22 + rand() * 0.28})`;
-        } else if (kind < 0.88) {
-          ctx.fillStyle = isLight
-            ? `rgba(255, 255, 255, ${0.22 + rand() * 0.32})`
-            : `rgba(205, 218, 232, ${0.06 + rand() * 0.11})`;
+      // 5. Organic Japanese Moss Clusters Near Outer Boulder Rim
+      const mossClusters = decorative ? 2 : 5;
+      for (let m = 0; m < mossClusters; m++) {
+        const angle = rng() * Math.PI * 2;
+        const mx = w * 0.5 + Math.cos(angle) * (w * 0.44);
+        const my = h * 0.5 + Math.sin(angle) * (h * 0.42);
+        const mr = (decorative ? 11 : 24) + rng() * 20;
+        const mossGrad = ctx.createRadialGradient(mx, my, 1, mx, my, mr);
+        if (isDark) {
+          mossGrad.addColorStop(0, "rgba(54, 92, 56, 0.52)");
+          mossGrad.addColorStop(0.6, "rgba(38, 68, 42, 0.26)");
+          mossGrad.addColorStop(1, "rgba(38, 68, 42, 0)");
         } else {
-          ctx.fillStyle = isLight
-            ? `rgba(142, 120, 88, ${0.09 + rand() * 0.09})`
-            : `rgba(148, 130, 104, ${0.05 + rand() * 0.06})`;
+          mossGrad.addColorStop(0, "rgba(82, 128, 68, 0.46)");
+          mossGrad.addColorStop(0.6, "rgba(98, 140, 78, 0.22)");
+          mossGrad.addColorStop(1, "rgba(98, 140, 78, 0)");
         }
-        ctx.fillRect(sx, sy, size, size);
-      }
-
-      // 5c. Recessed Hairline Rock Fissures with Highlight Ridges
-      const fissureCount = decorative ? 3 : 5;
-      for (let f = 0; f < fissureCount; f++) {
-        let vx = (0.1 + rand() * 0.8) * cw;
-        let vy = (0.1 + rand() * 0.8) * ch;
-        let angle = (rand() - 0.5) * 1.4;
-        const crackPts: Pt[] = [{ x: vx, y: vy }];
-
-        for (let step = 0; step < 16; step++) {
-          angle += (rand() - 0.5) * 0.52;
-          vx += Math.cos(angle) * (cw / 18);
-          vy += Math.sin(angle) * 13;
-          crackPts.push({ x: vx, y: vy });
-        }
-
+        ctx.fillStyle = mossGrad;
         ctx.beginPath();
-        crackPts.forEach((pt, idx) =>
-          idx === 0 ? ctx.moveTo(pt.x, pt.y) : ctx.lineTo(pt.x, pt.y)
-        );
-        ctx.strokeStyle = isLight
-          ? "rgba(54, 49, 42, 0.18)"
-          : "rgba(5, 7, 10, 0.45)";
-        ctx.lineWidth = 1.1;
-        ctx.stroke();
-
-        ctx.beginPath();
-        crackPts.forEach((pt, idx) =>
-          idx === 0
-            ? ctx.moveTo(pt.x + 1, pt.y + 1)
-            : ctx.lineTo(pt.x + 1, pt.y + 1)
-        );
-        ctx.strokeStyle = isLight
-          ? "rgba(255, 255, 255, 0.34)"
-          : "rgba(200, 214, 230, 0.09)";
-        ctx.lineWidth = 0.85;
-        ctx.stroke();
-      }
-
-      // 5d. Damp Moss/Lichen Patina Near the Outer Stone Rim
-      const mossSpots = decorative ? 65 : 45;
-      for (let m = 0; m < mossSpots; m++) {
-        const theta = rand() * Math.PI * 2;
-        const rimFactor = decorative
-          ? 0.55 + rand() * 0.42
-          : 0.89 + rand() * 0.1;
-        const mx = cx + Math.cos(theta) * rx * rimFactor;
-        const my = cy + Math.sin(theta) * ry * rimFactor;
-        ctx.beginPath();
-        ctx.arc(mx, my, 2.5 + rand() * 5, 0, Math.PI * 2);
-        ctx.fillStyle = isLight
-          ? `rgba(74, 112, 82, ${0.09 + rand() * 0.08})`
-          : `rgba(68, 108, 84, ${0.08 + rand() * 0.09})`;
+        ctx.arc(mx, my, mr, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 5e. Carved Recessed Inner Stone Bed
+      // 6. Carved Inner Stone Bed Bevel (Inset 16px inside outer boulder rim)
       if (!decorative) {
-        tracePoly(ctx, pts, 0, -1, 0.905, cx, cy);
-        ctx.strokeStyle = isLight
-          ? "rgba(44, 40, 34, 0.22)"
-          : "rgba(0, 0, 0, 0.52)";
-        ctx.lineWidth = 1.35;
+        ctx.save();
+        createOrganicStonePath(ctx, w, h, seed, false, 16);
+        ctx.strokeStyle = isDark
+          ? "rgba(0, 0, 0, 0.46)"
+          : "rgba(72, 76, 80, 0.2)";
+        ctx.lineWidth = 1.4;
         ctx.stroke();
-
-        tracePoly(ctx, pts, 0, 1, 0.905, cx, cy);
-        ctx.strokeStyle = isLight
-          ? "rgba(255, 255, 255, 0.52)"
-          : "rgba(210, 224, 238, 0.12)";
-        ctx.lineWidth = 1;
-        ctx.stroke();
+        ctx.restore();
       }
 
       ctx.restore();
 
-      // 6. Chiseled Top Rim Bevel Highlight
-      tracePoly(ctx, pts, 0, 0);
-      ctx.strokeStyle = isLight
-        ? "rgba(255, 255, 255, 0.88)"
-        : "rgba(215, 228, 242, 0.28)";
-      ctx.lineWidth = 1.75;
+      // 7. Crisp Top Rim Catchlight & Waterline Edge Definition
+      ctx.save();
+      createOrganicStonePath(ctx, w, h, seed, decorative);
+      ctx.strokeStyle = isDark
+        ? "rgba(204, 222, 238, 0.2)"
+        : "rgba(255, 255, 255, 0.76)";
+      ctx.lineWidth = 1.3;
       ctx.stroke();
+      ctx.restore();
     };
 
-    updateAndRender();
-    const ro = new ResizeObserver(updateAndRender);
+    renderStone();
+    document.fonts?.ready.then(renderStone);
+    const ro = new ResizeObserver(renderStone);
     ro.observe(article);
-    if (measureRef.current) ro.observe(measureRef.current);
     return () => ro.disconnect();
-  }, [theme, variant, inCluster, decorative]);
+  }, [theme, variant, decorative]);
 
   const alignClass =
-    !inCluster && align === "left"
+    align === "left"
       ? "stone-shift-left"
-      : !inCluster && align === "right"
+      : align === "right"
         ? "stone-shift-right"
         : "";
-
-  const baseClass = inCluster
-    ? "stepping-stone stepping-stone-cluster pointer-events-auto"
-    : `stepping-stone pointer-events-auto ${alignClass}`;
 
   return (
     <article
       ref={articleRef}
       id={id}
-      data-stone-shore=""
+      data-stepping-stone=""
       aria-hidden={decorative ? "true" : undefined}
-      {...(!inCluster ? { "data-stepping-stone": "" } : {})}
-      style={decorative ? { minHeight: `${minHeight}px` } : undefined}
-      className={`${baseClass} ${className}`}
+      style={style}
+      className={`stepping-stone pointer-events-auto ${alignClass} ${className}`}
     >
       <canvas
         ref={canvasRef}
@@ -456,27 +363,25 @@ export default function SteppingStone({
       {!decorative && (
         <div
           className={
-            inCluster ? "stone-content stone-content-cluster" : "stone-content"
+            compact ? "stone-content stone-content-compact" : "stone-content"
           }
         >
-          <div ref={measureRef} className="w-full">
-            {title && (
-              <header className="stone-heading">
-                <div className="flex items-center gap-3">
-                  <span aria-hidden="true" className="stone-inlay" />
-                  <h2 className="font-display engraved-title text-3xl font-normal leading-none sm:text-4xl">
-                    {title}
-                  </h2>
-                </div>
-                {subtitle && (
-                  <span className="font-mono-tech text-xs text-[var(--muted)]">
-                    {subtitle}
-                  </span>
-                )}
-              </header>
-            )}
-            {children}
-          </div>
+          {title && (
+            <header className="stone-heading">
+              <div className="flex items-center gap-3">
+                <span aria-hidden="true" className="stone-inlay" />
+                <h2 className="engraved-title text-2xl leading-tight sm:text-3xl md:text-4xl">
+                  {title}
+                </h2>
+              </div>
+              {subtitle && (
+                <span className="font-mono-tech text-xs text-[var(--muted)]">
+                  {subtitle}
+                </span>
+              )}
+            </header>
+          )}
+          {children}
         </div>
       )}
     </article>

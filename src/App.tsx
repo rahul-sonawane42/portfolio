@@ -1,31 +1,10 @@
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import HeroWordmark from "./components/HeroWordmark";
 import KoiPondCanvas from "./components/KoiPondCanvas";
 import SteppingStone from "./components/SteppingStone";
 import ThemeToggle, { type Theme } from "./components/ThemeToggle";
 import WoodenDeck from "./components/WoodenDeck";
 import { profile, experience, projects, skills, education } from "./resumeData";
-
-/* Asymmetric Arare-Koboshi Flagstone Placement Patterns for Multi-Stone Clusters */
-const CLUSTER_PATTERNS = [
-  {
-    contentSpan: "md:col-span-10",
-    fillerSpan: "hidden md:block md:col-span-2",
-    fillerFirst: true,
-    nudge: "md:translate-x-1",
-  },
-  {
-    contentSpan: "md:col-span-9",
-    fillerSpan: "hidden md:block md:col-span-3",
-    fillerFirst: false,
-    nudge: "md:-translate-x-1.5",
-  },
-  {
-    contentSpan: "md:col-span-10",
-    fillerSpan: "hidden md:block md:col-span-2",
-    fillerFirst: true,
-    nudge: "md:translate-x-0.5",
-  },
-];
 
 export default function App() {
   const [theme, setTheme] = useState<Theme>("dark");
@@ -82,50 +61,58 @@ export default function App() {
   const skillEntries = Object.entries(skills);
 
   return (
-    <>
+    <div className="relative min-h-screen w-full overflow-x-clip">
       <a href="#main-content" className="skip-link">
         Skip to content
       </a>
 
-      <KoiPondCanvas theme={theme} />
+      {/* Document-Space Overscan Pond Layer: scrolls rigidly with foreground on compositor thread */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+      >
+        <KoiPondCanvas theme={theme} />
+      </div>
+
       <ThemeToggle
         theme={theme}
         onToggle={() => setTheme(theme === "dark" ? "light" : "dark")}
       />
 
       <div className="pointer-events-none relative z-10 min-h-screen">
-        {/* Arched Zen Garden Bridge Leading onto Tobi-Ishi & Arare-Koboshi Stepping Stones */}
         <main
           id="main-content"
-          className="flex w-full flex-col gap-24 pb-32 sm:gap-28"
+          className="flex w-full flex-col gap-20 pb-32 sm:gap-24"
         >
-          {/* Entry: Monumental Name Over the Pond + Arched Zen Garden Bridge */}
+          {/* Hero: Centered Monumental Full-Space Wordmark + Arched Zen Garden Bridge */}
           <section
             id="top"
             data-enter=""
-            className="flex min-h-[100svh] w-full flex-col justify-between pb-6 pt-14"
+            className="flex min-h-[100svh] w-full flex-col justify-between pt-10 sm:pt-12"
           >
-            <div className="mx-auto w-full max-w-[52rem] px-7 sm:px-11">
-              <p className="select-none font-mono-tech text-[11px] text-[var(--muted)] opacity-75">
-                Click anywhere on the water to feed the koi
+            <div className="mx-auto w-full px-6 text-center">
+              <p className="select-none font-mono-tech text-[11px] text-[var(--muted)] opacity-80">
+                Click water to feed koi &middot; Hover title glyphs
               </p>
             </div>
 
-            {/* Monumental Tall & Wide Display Wordmark Floating Over the Pond */}
-            <header className="enter-1 my-auto select-none px-4 py-6 text-center sm:px-8">
-              <h1 className="hero-wordmark">{profile.name}</h1>
-              <p className="mt-7 font-mono-tech text-[11px] uppercase tracking-[0.24em] text-[var(--fg-soft)] opacity-85 sm:mt-9 sm:text-xs">
+            <header className="enter-1 mx-auto my-auto flex w-full max-w-[96vw] flex-col items-center justify-center px-3 py-8 text-center sm:px-8 sm:py-10">
+              <p
+                className="mb-7 font-mono-tech text-[11px] font-medium uppercase tracking-[0.24em] sm:mb-9 sm:text-xs md:mb-11"
+                style={{ color: "var(--hero-sub)" }}
+              >
                 {profile.role} &middot; {profile.location}
               </p>
+
+              <HeroWordmark text={profile.name} />
             </header>
 
-            {/* Arched Zen Garden Bridge with Railings & Stone Abutments */}
             <WoodenDeck theme={theme} className="enter-2">
-              <p className="max-w-2xl text-[14.5px] leading-relaxed text-[var(--deck-fg-soft)] sm:text-[15px] sm:leading-7">
+              <p className="mx-auto max-w-2xl text-[14.5px] leading-relaxed text-[var(--deck-fg-soft)] sm:text-[15.5px] sm:leading-7">
                 {profile.bio}
               </p>
 
-              <div className="mt-5 flex flex-wrap items-center gap-3">
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3 sm:gap-4">
                 <ActionLink href="#projects" main onDeck>
                   Selected systems
                 </ActionLink>
@@ -144,274 +131,262 @@ export default function App() {
             </WoodenDeck>
           </section>
 
-          {/* 01: Selected Systems — Interlocking Flagstone Cluster (Arare-Koboshi) */}
-          <section id="projects" className="pt-2">
-            <div data-stepping-stone="" className="stone-cluster">
-              {/* Row 1: Compact Section Header Stone + Flanking Decorative Stone */}
-              <SteppingStone
-                theme={theme}
-                title="Selected systems"
-                subtitle="01 / Architecture & Builds"
-                variant={10}
-                inCluster
-                className="md:col-span-8"
-              />
-              <SteppingStone
-                theme={theme}
-                variant={11}
-                inCluster
-                decorative
-                minHeight={92}
-                className="hidden md:block md:col-span-4 md:translate-y-1"
-              />
+          {/* Winding Japanese Tobi-Ishi Stepping-Stone Path */}
+          <div className="mx-auto flex w-full max-w-5xl flex-col gap-16 px-4 sm:gap-20 sm:px-8">
+            {/* 01: Selected Systems (Modular Staggered Flagstones + Compact Sutegishi Pebbles) */}
+            <section id="projects" className="space-y-8 sm:space-y-10">
+              <div className="mx-auto max-w-2xl">
+                <SteppingStone
+                  theme={theme}
+                  title="Selected systems"
+                  subtitle="01 / Architecture & Builds"
+                  variant={1}
+                  compact
+                />
+              </div>
 
-              {/* Rows 2..N: Staggered Case-Study Stones + Small Accent Pebbles (Sutegishi) */}
               {projects.map((p, idx) => {
                 const summary = p.points[0] ?? "";
                 const specs = p.points.slice(1);
                 const indexLabel = String(idx + 1).padStart(2, "0");
-                const layout = CLUSTER_PATTERNS[idx % CLUSTER_PATTERNS.length];
-
-                const projectStone = (
-                  <SteppingStone
-                    theme={theme}
-                    variant={12 + idx * 2}
-                    inCluster
-                    className={`${layout.contentSpan} ${layout.nudge}`}
-                  >
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <div className="flex items-baseline gap-3">
-                        <span className="font-mono-tech text-xs font-semibold text-[var(--kohaku)]">
-                          {indexLabel}
-                        </span>
-                        <h3 className="font-display text-2xl sm:text-3xl">
-                          {p.name}
-                        </h3>
-                      </div>
-                      {p.status && (
-                        <span className="font-mono-tech text-xs font-medium text-[var(--gold)]">
-                          {p.status}
-                        </span>
-                      )}
-                    </div>
-
-                    <p className="mt-3 text-[15px] leading-7 text-[var(--fg-soft)]">
-                      {summary}
-                    </p>
-
-                    {specs.length > 0 && (
-                      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {specs.map((spec, sIdx) => (
-                          <div key={spec} className="stone-spec-box">
-                            <p className="font-mono-tech text-[10.5px] uppercase tracking-[0.14em] text-[var(--moss)]">
-                              {sIdx === 0
-                                ? "Core Architecture"
-                                : "Implementation Detail"}
-                            </p>
-                            <p className="mt-1.5 text-[13.5px] leading-6 text-[var(--fg-soft)]">
-                              {spec}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-                      <div className="flex flex-wrap gap-1.5">
-                        {p.stack.map((s) => (
-                          <span key={s} className="tag">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-
-                      {p.repo && (
-                        <ActionLink href={p.repo}>Source code</ActionLink>
-                      )}
-                    </div>
-                  </SteppingStone>
-                );
-
-                const fillerStone = (
-                  <SteppingStone
-                    theme={theme}
-                    variant={13 + idx * 2}
-                    inCluster
-                    decorative
-                    minHeight={116}
-                    className={layout.fillerSpan}
-                  />
-                );
+                const isEven = idx % 2 === 0;
 
                 return (
-                  <Fragment key={p.name}>
-                    {layout.fillerFirst ? (
-                      <>
-                        {fillerStone}
-                        {projectStone}
-                      </>
-                    ) : (
-                      <>
-                        {projectStone}
-                        {fillerStone}
-                      </>
-                    )}
-                  </Fragment>
-                );
-              })}
-            </div>
-          </section>
-
-          {/* Stone 02: Engineering Craft & Stack (Single Monolithic Boulder) */}
-          <section id="skills" className="pt-2">
-            <SteppingStone
-              theme={theme}
-              title="Engineering craft"
-              subtitle="02 / Capabilities"
-              variant={2}
-              align="right"
-            >
-              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                {skillEntries.map(([group, items], idx) => (
                   <div
-                    key={group}
-                    className={`stone-spec-box flex flex-col justify-between ${
-                      idx === 0 && skillEntries.length % 2 === 1
-                        ? "md:col-span-2"
-                        : ""
+                    key={p.name}
+                    className={`relative flex flex-col items-center justify-center gap-4 lg:gap-6 ${
+                      isEven
+                        ? "stone-shift-left lg:flex-row lg:items-end"
+                        : "stone-shift-right lg:flex-row-reverse lg:items-start"
                     }`}
                   >
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-mono-tech text-xs font-semibold uppercase tracking-[0.1em] text-[var(--moss)]">
-                          {group}
-                        </h3>
-                        <span className="font-mono-tech text-[11px] text-[var(--muted)]">
-                          {String(idx + 1).padStart(2, "0")}
-                        </span>
-                      </div>
-                      <div className="mt-3.5 flex flex-wrap gap-1.5">
-                        {items.map((skill) => (
-                          <span key={skill} className="tag">
-                            {skill}
+                    <SteppingStone
+                      theme={theme}
+                      variant={10 + idx * 3}
+                      className="w-full max-w-[54rem]"
+                    >
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <div className="flex items-baseline gap-3">
+                          <span className="font-mono-tech text-xs font-semibold text-[var(--kohaku)]">
+                            {indexLabel}
                           </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </SteppingStone>
-          </section>
-
-          {/* Stone 03: Trajectory & Pedigree (Single Monolithic Boulder) */}
-          <section id="experience" className="pt-2">
-            <SteppingStone
-              theme={theme}
-              title="Trajectory and pedigree"
-              subtitle="03 / Background"
-              variant={3}
-              align="left"
-            >
-              <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-                <div className="space-y-6 md:col-span-7">
-                  <p className="font-mono-tech text-[11px] uppercase tracking-[0.16em] text-[var(--moss)]">
-                    Leadership &amp; Roles
-                  </p>
-                  <div className="divide-y divide-[var(--line)]">
-                    {experience.map((r) => (
-                      <article
-                        key={r.title + r.org}
-                        className="stone-divider py-5 first:pt-0 last:pb-0"
-                      >
-                        <div className="flex flex-wrap items-baseline justify-between gap-2">
-                          <h3 className="font-display text-2xl">{r.title}</h3>
-                          <span className="font-mono-tech text-xs font-medium text-[var(--gold)]">
-                            {r.period}
-                          </span>
+                          <h3 className="engraved-title text-2xl sm:text-3xl">
+                            {p.name}
+                          </h3>
                         </div>
-                        <p className="mt-1 font-mono-tech text-xs text-[var(--muted)]">
-                          {r.org}
-                        </p>
-                        <p className="mt-2.5 text-[14px] leading-6 text-[var(--fg-soft)]">
-                          {r.points.join(" ")}
-                        </p>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-6 md:col-span-5 md:border-l md:border-[var(--line)] md:pl-7">
-                  <p className="font-mono-tech text-[11px] uppercase tracking-[0.16em] text-[var(--moss)]">
-                    Academic Foundation
-                  </p>
-                  <div className="space-y-5">
-                    {education.map((e) => (
-                      <div key={e.degree} className="stone-spec-box">
-                        <p className="font-mono-tech text-xs font-medium text-[var(--gold)]">
-                          {e.period}
-                        </p>
-                        <h3 className="font-display mt-1.5 text-xl leading-snug">
-                          {e.degree}
-                        </h3>
-                        <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
-                          {e.school}
-                        </p>
-                        {e.note && (
-                          <p className="mt-2.5 font-mono-tech text-xs font-medium text-[var(--fg-soft)]">
-                            {e.note}
-                          </p>
+                        {p.status && (
+                          <span className="font-mono-tech text-xs font-medium text-[var(--gold)]">
+                            {p.status}
+                          </span>
                         )}
                       </div>
-                    ))}
+
+                      <p className="mt-3 text-[15px] text-[var(--fg-soft)]">
+                        {summary}
+                      </p>
+
+                      {specs.length > 0 && (
+                        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          {specs.map((spec, sIdx) => (
+                            <div key={spec} className="stone-spec-box">
+                              <p className="font-mono-tech text-[10.5px] uppercase tracking-[0.14em] text-[var(--moss)]">
+                                {sIdx === 0
+                                  ? "Core Architecture"
+                                  : "Implementation Detail"}
+                              </p>
+                              <p className="mt-1.5 text-[13.5px] leading-6 text-[var(--fg-soft)]">
+                                {spec}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
+                        <div className="flex flex-wrap gap-2">
+                          {p.stack.map((s) => (
+                            <span key={s} className="tag">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+
+                        {p.repo && (
+                          <ActionLink href={p.repo}>Source code</ActionLink>
+                        )}
+                      </div>
+                    </SteppingStone>
+
+                    {/* Compact Fixed-Dimension Sutegishi Accent Stone */}
+                    <SteppingStone
+                      theme={theme}
+                      variant={11 + idx * 3}
+                      decorative
+                      style={{ width: "140px", height: "90px" }}
+                      className={`hidden shrink-0 lg:block ${
+                        isEven ? "mb-4 self-end" : "mt-6 self-start"
+                      }`}
+                    />
+                  </div>
+                );
+              })}
+            </section>
+
+            {/* 02: Engineering Craft */}
+            <section id="skills" className="mx-auto w-full max-w-[50rem]">
+              <SteppingStone
+                theme={theme}
+                title="Engineering craft"
+                subtitle="02 / Capabilities"
+                variant={2}
+                align="right"
+              >
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                  {skillEntries.map(([group, items], idx) => (
+                    <div
+                      key={group}
+                      className={`stone-spec-box flex flex-col justify-between ${
+                        idx === 0 && skillEntries.length % 2 === 1
+                          ? "md:col-span-2"
+                          : ""
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="font-mono-tech text-xs font-semibold uppercase tracking-[0.1em] text-[var(--moss)]">
+                            {group}
+                          </h3>
+                          <span className="font-mono-tech text-[11px] text-[var(--muted)]">
+                            {String(idx + 1).padStart(2, "0")}
+                          </span>
+                        </div>
+                        <div className="mt-3.5 flex flex-wrap gap-1.5">
+                          {items.map((skill) => (
+                            <span key={skill} className="tag">
+                              {skill}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SteppingStone>
+            </section>
+
+            {/* 03: Trajectory & Pedigree */}
+            <section id="experience" className="mx-auto w-full max-w-[52rem]">
+              <SteppingStone
+                theme={theme}
+                title="Trajectory and pedigree"
+                subtitle="03 / Background"
+                variant={3}
+                align="left"
+              >
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-12 md:gap-9">
+                  <div className="space-y-5 md:col-span-7">
+                    <p className="font-mono-tech text-[11px] uppercase tracking-[0.16em] text-[var(--moss)]">
+                      Leadership &amp; Roles
+                    </p>
+                    <div className="divide-y divide-[var(--line)]">
+                      {experience.map((r) => (
+                        <article
+                          key={r.title + r.org}
+                          className="stone-divider py-5 first:pt-0 last:pb-0"
+                        >
+                          <div className="flex flex-wrap items-baseline justify-between gap-2">
+                            <h3 className="engraved-title text-xl sm:text-2xl">
+                              {r.title}
+                            </h3>
+                            <span className="font-mono-tech text-xs font-medium text-[var(--gold)]">
+                              {r.period}
+                            </span>
+                          </div>
+                          <p className="mt-1 font-mono-tech text-xs text-[var(--muted)]">
+                            {r.org}
+                          </p>
+                          <p className="mt-2.5 text-[14px] text-[var(--fg-soft)]">
+                            {r.points.join(" ")}
+                          </p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-5 md:col-span-5 md:border-l md:border-[var(--line)] md:pl-7">
+                    <p className="font-mono-tech text-[11px] uppercase tracking-[0.16em] text-[var(--moss)]">
+                      Academic Foundation
+                    </p>
+                    <div className="space-y-4">
+                      {education.map((e) => (
+                        <div key={e.degree} className="stone-spec-box">
+                          <p className="font-mono-tech text-xs font-medium text-[var(--gold)]">
+                            {e.period}
+                          </p>
+                          <h3 className="engraved-title mt-1.5 text-lg leading-snug sm:text-xl">
+                            {e.degree}
+                          </h3>
+                          <p className="mt-1 text-xs leading-relaxed text-[var(--muted)]">
+                            {e.school}
+                          </p>
+                          {e.note && (
+                            <p className="mt-2.5 font-mono-tech text-xs font-medium text-[var(--fg-soft)]">
+                              {e.note}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </SteppingStone>
-          </section>
+              </SteppingStone>
+            </section>
 
-          {/* Stone 04: Start a Conversation (Single Monolithic Boulder) */}
-          <section id="contact" className="pt-2">
-            <SteppingStone
-              theme={theme}
-              title="Start a conversation"
-              subtitle="04 / Contact"
-              variant={4}
-              align="right"
-            >
-              <p className="max-w-xl text-[15px] leading-7 text-[var(--fg-soft)]">
-                Open to AI/ML, data science, and backend systems engineering
-                internships. Reach out directly for project discussions,
-                research collaborations, or engineering roles.
-              </p>
+            {/* 04: Start a Conversation */}
+            <section id="contact" className="mx-auto w-full max-w-[44rem]">
+              <SteppingStone
+                theme={theme}
+                title="Start a conversation"
+                subtitle="04 / Contact"
+                variant={4}
+                align="right"
+              >
+                <p className="max-w-xl text-[15px] text-[var(--fg-soft)]">
+                  Open to AI/ML, data science, and backend systems engineering
+                  internships. Reach out directly for project discussions,
+                  research collaborations, or engineering roles.
+                </p>
 
-              <footer className="stone-divider mt-7 flex flex-wrap items-center justify-between gap-6 border-t pt-7">
-                <div className="font-mono-tech text-sm">
-                  <p className="font-medium text-[var(--fg)]">{profile.email}</p>
-                  <p className="mt-1 text-xs text-[var(--muted)]">
-                    {profile.location}
-                  </p>
-                </div>
+                <footer className="stone-divider mt-7 flex flex-wrap items-center justify-between gap-6 border-t pt-7">
+                  <div className="font-mono-tech text-sm">
+                    <p className="break-all font-medium text-[var(--fg)]">
+                      {profile.email}
+                    </p>
+                    <p className="mt-1 text-xs text-[var(--muted)]">
+                      {profile.location}
+                    </p>
+                  </div>
 
-                <div className="flex w-full flex-wrap gap-3 sm:w-auto">
-                  <button
-                    type="button"
-                    className="btn btn-main w-full sm:w-auto"
-                    onClick={copyEmail}
-                  >
-                    {copied ? "Email copied" : "Copy email"}
-                  </button>
-                  <ActionLink href={profile.resume}>Resume</ActionLink>
-                  {profile.github && (
-                    <ActionLink href={profile.github}>GitHub</ActionLink>
-                  )}
-                  <ActionLink href={profile.linkedin}>LinkedIn</ActionLink>
-                </div>
-              </footer>
-            </SteppingStone>
-          </section>
+                  <div className="flex w-full flex-wrap gap-3 sm:w-auto">
+                    <button
+                      type="button"
+                      className="btn btn-main w-full sm:w-auto"
+                      onClick={copyEmail}
+                    >
+                      {copied ? "Email copied" : "Copy email"}
+                    </button>
+                    <ActionLink href={profile.resume}>Resume</ActionLink>
+                    {profile.github && (
+                      <ActionLink href={profile.github}>GitHub</ActionLink>
+                    )}
+                    <ActionLink href={profile.linkedin}>LinkedIn</ActionLink>
+                  </div>
+                </footer>
+              </SteppingStone>
+            </section>
+          </div>
         </main>
       </div>
-    </>
+    </div>
   );
 }

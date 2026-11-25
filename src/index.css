@@ -1,88 +1,107 @@
-@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Anton&family=Big+Shoulders+Display:wght@800;900&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
 
 :root {
-  --font-hero: "Oswald", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Instrument Serif", Georgia, serif;
+  --font-hero: "Big Shoulders Display", "Anton", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
 
-  /* Dark Smoked-Walnut Bridge Typography & Buttons (Same Wood Colors Across Themes) */
+  /* Smoked-Walnut Bridge Typography & Plaques */
   --deck-fg: #f6efe4;
-  --deck-fg-soft: #e2d6c4;
+  --deck-fg-soft: #e6dac8;
   --deck-muted: #c4b59f;
-  --deck-line: rgba(14, 8, 4, 0.72);
-  --deck-line-glint: rgba(255, 222, 180, 0.14);
 }
 
 /* Night Zen Garden: Moonlit River Basalt & Quiet Black Pond */
 :root[data-theme="dark"] {
-  --bg: #000000;
+  --bg: #04080c;
   --fg: #ebe6dc;
-  --fg-soft: #cac4b8;
-  --muted: #969084;
+  --fg-soft: #c9c3b6;
+  --muted: #969083;
 
-  --hero-title: #f5f0e6;
-  --hero-shadow: 0 8px 36px rgba(0, 0, 0, 0.98), 0 2px 6px rgba(0, 0, 0, 0.92);
+  --hero-title: #ece6d8;
+  --hero-shadow: 0 14px 36px rgba(0, 0, 0, 0.88), 0 2px 0 rgba(255, 250, 238, 0.22);
+  --hero-sub: #c6bfb0;
 
-  /* Chiseled Typography & Carved Groove Rules */
-  --carved-heading: #f0ece3;
-  --carved-top-shadow: rgba(0, 0, 0, 0.96);
+  /* Chiseled Typography (Hori) & Carved Groove Rules */
+  --carved-heading: #ede6d6;
+  --carved-top-shadow: rgba(0, 0, 0, 0.92);
   --carved-bot-glint: rgba(255, 255, 255, 0.14);
   --line: rgba(8, 10, 12, 0.85);
   --line-glint: rgba(255, 255, 255, 0.1);
-  --recess-bg: rgba(10, 13, 16, 0.42);
 
-  --kohaku: #d9532f;
-  --kohaku-fg: #fbf7f0;
+  /* Recessed Specification Callout Box */
+  --recess-bg: rgba(10, 14, 18, 0.58);
+  --spec-border-top: rgba(0, 0, 0, 0.72);
+  --spec-border-bottom: rgba(255, 255, 255, 0.11);
+  --spec-inset: inset 0 3px 10px rgba(0, 0, 0, 0.65), 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  --kohaku: #e07a5f;
+  --kohaku-fg: #fff8f3;
   --moss: #7fb08e;
   --gold: #d6aa63;
 
-  /* Cinnabar Hanko Seal & Chiseled Stone Inlay Buttons */
+  /* Cinnabar Hanko Seal & Pebble Skill Tags */
   --hanko: #b5361b;
   --hanko-hover: #c93f22;
-  --hanko-border: rgba(246, 165, 140, 0.5);
-  --plaque-bg: rgba(16, 19, 22, 0.82);
-  --plaque-hover: rgba(24, 29, 34, 0.92);
-  --plaque-border: rgba(255, 255, 255, 0.14);
+  --hanko-border: rgba(255, 212, 198, 0.38);
+  --pebble-bg: linear-gradient(145deg, rgba(46, 54, 62, 0.88), rgba(24, 29, 34, 0.94));
+  --pebble-border: rgba(255, 255, 255, 0.12);
+  --pebble-text: #dfd8c8;
+  --pebble-shadow: 0 3px 8px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 /* Day Zen Garden: Sunlit Shirakawa Granite & Celadon Pond */
 :root[data-theme="light"] {
   --bg: #a9d3e2;
-  --fg: #1c1a17;
-  --fg-soft: #332f29;
-  --muted: #5c564d;
+  --fg: #1e2326;
+  --fg-soft: #2c3338;
+  --muted: #4b555c;
 
-  --hero-title: #161b1e;
-  --hero-shadow: 0 4px 26px rgba(255, 255, 255, 0.72), 0 1px 0 rgba(255, 255, 255, 0.85);
+  --hero-title: #1b2226;
+  --hero-shadow: 0 12px 30px rgba(20, 42, 38, 0.24), 0 2px 0 rgba(255, 255, 255, 0.65);
+  --hero-sub: #253438;
 
-  /* Chiseled Typography & Carved Groove Rules */
-  --carved-heading: #191714;
-  --carved-top-shadow: rgba(0, 0, 0, 0.24);
-  --carved-bot-glint: rgba(255, 255, 255, 0.88);
-  --line: rgba(38, 34, 28, 0.28);
+  /* Chiseled Typography (Hori) & Carved Groove Rules */
+  --carved-heading: #1e2326;
+  --carved-top-shadow: rgba(12, 16, 18, 0.28);
+  --carved-bot-glint: rgba(255, 255, 255, 0.82);
+  --line: rgba(38, 34, 28, 0.24);
   --line-glint: rgba(255, 255, 255, 0.78);
-  --recess-bg: rgba(168, 162, 150, 0.34);
 
-  --kohaku: #b5381e;
+  /* Recessed Specification Callout Box */
+  --recess-bg: rgba(196, 194, 188, 0.48);
+  --spec-border-top: rgba(65, 68, 72, 0.34);
+  --spec-border-bottom: rgba(255, 255, 255, 0.78);
+  --spec-inset: inset 0 2px 7px rgba(45, 50, 54, 0.24), 0 1px 0 rgba(255, 255, 255, 0.75);
+
+  --kohaku: #b83324;
   --kohaku-fg: #fffaf3;
   --moss: #2b6140;
   --gold: #8a5b21;
 
-  /* Cinnabar Hanko Seal & Chiseled Stone Inlay Buttons */
+  /* Cinnabar Hanko Seal & Pebble Skill Tags */
   --hanko: #b5381e;
   --hanko-hover: #c74124;
   --hanko-border: rgba(255, 232, 222, 0.6);
-  --plaque-bg: rgba(196, 191, 181, 0.72);
-  --plaque-hover: rgba(184, 178, 167, 0.88);
-  --plaque-border: rgba(36, 33, 28, 0.24);
+  --pebble-bg: linear-gradient(145deg, rgba(244, 242, 237, 0.92), rgba(214, 212, 206, 0.96));
+  --pebble-border: rgba(40, 46, 50, 0.16);
+  --pebble-text: #20262a;
+  --pebble-shadow: 0 2px 6px rgba(35, 42, 46, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 2.5rem;
   overflow-x: clip;
+  background-color: var(--bg);
 }
 
 body {
@@ -91,6 +110,8 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.65s ease, color 0.35s ease;
 }
 
@@ -123,26 +144,76 @@ body {
   font-family: var(--font-mono);
 }
 
-/* Monumental Display Wordmark: Wider & Taller, Still Taller Than Wide */
+/* Monumental Full-Space Hero Wordmark & Per-Character ASCII Glitch Matrix */
 .hero-wordmark {
-  display: inline-block;
   font-family: var(--font-hero);
-  font-weight: 700;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.055em;
-  line-height: 0.9;
-  font-size: clamp(2.55rem, 7.6vw, 7.5rem);
-  transform: scaleY(1.32) scaleX(1.08);
-  transform-origin: center center;
+  line-height: 0.84;
+  letter-spacing: 0.015em;
+  font-size: clamp(4.25rem, min(14.8vw, 24vh), 18.5rem);
   color: var(--hero-title);
   text-shadow: var(--hero-shadow);
+  transform: scaleY(1.34);
+  transform-origin: center center;
+  user-select: none;
   transition: color 0.45s ease, text-shadow 0.45s ease;
 }
 
-@media (min-width: 640px) {
-  .hero-wordmark {
-    white-space: nowrap;
-  }
+.hero-char-cell {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  cursor: crosshair;
+  transition: color 0.12s ease;
+}
+
+.hero-char-solid {
+  display: inline-block;
+  transition: opacity 0.08s ease;
+}
+
+.hero-char-cell.is-glitching .hero-char-solid {
+  opacity: 0.07;
+}
+
+.hero-char-ascii-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 0.124em;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  pointer-events: none;
+  opacity: 0;
+  overflow: hidden;
+  white-space: pre;
+  text-align: center;
+}
+
+.hero-char-cell.is-glitching .hero-char-ascii-overlay {
+  opacity: 1;
+}
+
+:root[data-theme="dark"] .hero-char-cell.is-glitching .hero-char-ascii-overlay {
+  color: #f4efe4;
+  text-shadow:
+    -2px 0 0 rgba(56, 212, 232, 0.85),
+    2px 0 0 rgba(235, 84, 52, 0.85),
+    0 0 12px rgba(244, 239, 228, 0.45);
+}
+
+:root[data-theme="light"] .hero-char-cell.is-glitching .hero-char-ascii-overlay {
+  color: #161d21;
+  text-shadow:
+    -2px 0 0 rgba(14, 138, 168, 0.8),
+    2px 0 0 rgba(196, 48, 28, 0.82),
+    0 0 8px rgba(255, 255, 255, 0.6);
 }
 
 /* Full-Width Arched Zen Garden Bridge */
@@ -150,98 +221,61 @@ body {
   position: relative;
   isolation: isolate;
   width: 100%;
-  margin-top: 2.75rem;
+  margin-top: 0.5rem;
 }
 
-.deck-surface-canvas {
-  position: absolute;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.deck-content {
-  position: relative;
-  z-index: 2;
-  max-width: 52rem;
-  margin-inline: auto;
-  padding: 1.85rem 1.75rem 2.25rem;
-  color: var(--deck-fg);
-}
-
-@media (min-width: 640px) {
-  .deck-content {
-    padding: 2.15rem 2.75rem 2.55rem;
-  }
-}
-
-/* Interlocking Arare-Koboshi Flagstone Cluster for Long Sections */
-.stone-cluster {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.95rem;
-  width: min(calc(100% - 2rem), 54rem);
-  margin-inline: auto;
-}
-
-@media (min-width: 768px) {
-  .stone-cluster {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 0.95rem;
-    align-items: stretch;
-  }
-}
-
-/* Staggered Tobi-Ishi Stepping Stone Path */
+/* Winding Tobi-Ishi Stepping Stone Path */
 .stepping-stone {
   position: relative;
   isolation: isolate;
-  width: min(calc(100% - 2rem), 50rem);
-  margin-inline: auto;
+  width: 100%;
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.stepping-stone-cluster {
-  width: 100%;
-  margin-inline: 0;
-}
-
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .stone-shift-left {
-    transform: translateX(-3%);
+    transform: translateX(-2.2%);
   }
   .stone-shift-right {
-    transform: translateX(3%);
+    transform: translateX(2.2%);
   }
 }
 
 .stone-surface-canvas {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   z-index: 0;
 }
 
-/* Inscribed Safe Padding Driven by Closed-Form Superellipse Geometry */
+/* Generous Boulder Margin: lets the organic n=3.15 river stone swell around the inscribed text */
 .stone-content {
   position: relative;
-  z-index: 2;
-  padding-block: var(--stone-pad-y, 2.75rem);
-  padding-inline: 2.25rem;
+  z-index: 1;
+  padding: 2.9rem 2.5rem;
 }
 
 @media (min-width: 640px) {
   .stone-content {
-    padding-inline: 4.5rem;
+    padding: 3.65rem 4.65rem;
   }
 }
 
-.stone-content-cluster {
-  padding-block: var(--stone-pad-y, 1.85rem);
-  padding-inline: 1.75rem;
+@media (min-width: 768px) {
+  .stone-content {
+    padding: 4.1rem 5.75rem;
+  }
+}
+
+.stone-content-compact {
+  padding: 2.15rem 3rem;
 }
 
 @media (min-width: 640px) {
-  .stone-content-cluster {
-    padding-inline: 2.65rem;
+  .stone-content-compact {
+    padding: 2.5rem 4.75rem;
   }
 }
 
@@ -251,8 +285,8 @@ body {
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 0.5rem 1.25rem;
+  margin-bottom: 1.65rem;
   padding-bottom: 0.9rem;
   border-bottom: 1px solid var(--line);
   box-shadow: 0 1px 0 var(--line-glint);
@@ -267,6 +301,7 @@ body {
 
 .stone-inlay {
   display: inline-block;
+  flex-shrink: 0;
   width: 4px;
   height: 20px;
   border-radius: 1px;
@@ -276,30 +311,33 @@ body {
     0 1px 0 var(--carved-bot-glint);
 }
 
-/* Carved Specification Callout Cells Inside Case-Study Stones */
+/* Recessed Specification Callout Cells Inside Case-Study Stones */
 .stone-spec-box {
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: 4px;
+  padding: 1rem 1.2rem;
   background: var(--recess-bg);
-  box-shadow:
-    inset 0 1.5px 3px rgba(0, 0, 0, 0.25),
-    0 1px 0 var(--line-glint);
+  border-top: 1px solid var(--spec-border-top);
+  border-bottom: 1px solid var(--spec-border-bottom);
+  box-shadow: var(--spec-inset);
+  border-radius: 14px;
 }
 
 /* Engraved Typography (Hori) */
 .engraved-title,
 .stepping-stone h1,
+.stepping-stone h2,
 .stepping-stone h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
   color: var(--carved-heading);
   text-shadow:
     0 -1px 1px var(--carved-top-shadow),
     0 1px 0 var(--carved-bot-glint);
+  letter-spacing: -0.015em;
 }
 
 .stone-content p,
 .stone-content li {
-  text-shadow: 0 1px 0 var(--carved-bot-glint);
+  line-height: 1.68;
 }
 
 .stone-divider {
@@ -307,26 +345,26 @@ body {
   box-shadow: 0 1px 0 var(--line-glint);
 }
 
-/* Carved Pebble Skill Chips */
+/* Tactile Pebble Skill Chips */
 .tag {
   display: inline-flex;
   align-items: center;
-  padding: 4px 11px;
-  border: 1px solid var(--plaque-border);
-  border-radius: 999px;
-  background: var(--plaque-bg);
-  box-shadow:
-    inset 0 1.5px 3px rgba(0, 0, 0, 0.35),
-    0 1px 0 var(--line-glint);
-  color: var(--fg-soft);
+  padding: 0.34rem 0.78rem;
+  border: 1px solid var(--pebble-border);
+  border-radius: 9999px;
+  background: var(--pebble-bg);
+  box-shadow: var(--pebble-shadow);
+  color: var(--pebble-text);
   font-family: var(--font-mono);
-  font-size: 11.5px;
-  transition: border-color 0.18s ease, color 0.18s ease;
+  font-size: 0.73rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
 .tag:hover {
+  transform: translateY(-1px);
   border-color: var(--moss);
-  color: var(--fg);
 }
 
 /* Chiseled Stone-Inlay Buttons & Cinnabar Hanko Seal */
@@ -335,35 +373,33 @@ body {
   min-height: 40px;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  padding: 0 17px;
-  border: 1px solid var(--plaque-border);
-  border-radius: 3px;
-  background: var(--plaque-bg);
-  box-shadow:
-    inset 0 1.5px 3px rgba(0, 0, 0, 0.42),
-    0 1px 0 var(--line-glint);
-  color: var(--fg);
+  gap: 0.5rem;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid var(--pebble-border);
+  border-radius: 10px;
+  background: var(--pebble-bg);
+  box-shadow: var(--pebble-shadow);
+  color: var(--pebble-text);
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 0.76rem;
   font-weight: 500;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
   transition:
-    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-    border-color 0.18s ease,
-    background-color 0.18s ease,
-    color 0.18s ease;
+    transform 0.16s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.16s ease,
+    filter 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .btn:hover {
-  background: var(--plaque-hover);
   border-color: var(--moss);
   transform: translateY(-1.5px);
 }
 
 .btn:active {
-  transform: translateY(0) scale(0.985);
+  transform: translateY(0.5px);
 }
 
 .btn:focus-visible {
@@ -372,50 +408,56 @@ body {
 }
 
 .btn-main {
-  border-color: var(--hanko-border);
-  background: var(--hanko);
+  border: 1.5px solid var(--hanko-border);
+  background: linear-gradient(155deg, #c93b28 0%, #9e2416 100%);
   box-shadow:
-    inset 0 0 0 1.5px rgba(255, 245, 235, 0.22),
-    inset 0 2px 4px rgba(55, 10, 2, 0.45),
-    0 2px 8px rgba(0, 0, 0, 0.26);
-  color: var(--kohaku-fg);
+    0 6px 18px rgba(158, 36, 22, 0.42),
+    inset 0 1px 0 rgba(255, 220, 210, 0.42),
+    inset 0 -2px 0 rgba(72, 12, 6, 0.55);
+  color: #fff8f3;
   text-shadow: 0 1px 1px rgba(45, 8, 2, 0.5);
   font-weight: 600;
 }
 
 .btn-main:hover {
-  background: var(--hanko-hover);
+  filter: brightness(1.07);
   border-color: var(--hanko-border);
-  color: var(--kohaku-fg);
+  color: #fff8f3;
   transform: translateY(-1.5px);
 }
 
-/* Dark Wood-Mounted Plaque Buttons on the Zen Bridge */
+/* Smoked-Walnut Plaque Buttons on the Zen Bridge */
 .deck-btn {
-  border-color: rgba(255, 222, 180, 0.22);
-  background: rgba(14, 9, 6, 0.78);
+  border: 1px solid rgba(224, 186, 138, 0.28);
+  background: linear-gradient(180deg, #3b281c 0%, #261810 100%);
   box-shadow:
-    inset 0 1.5px 3px rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(255, 222, 180, 0.14);
-  color: var(--deck-fg);
+    0 5px 14px rgba(0, 0, 0, 0.48),
+    inset 0 1px 0 rgba(242, 206, 160, 0.22),
+    inset 0 -2px 0 rgba(10, 6, 3, 0.7);
+  color: #f2e8d5;
 }
 
 .deck-btn:hover {
-  background: rgba(24, 16, 10, 0.92);
-  border-color: rgba(246, 184, 112, 0.5);
-  color: var(--deck-fg);
+  border-color: rgba(235, 198, 148, 0.52);
+  background: linear-gradient(180deg, #473123 0%, #2e1e14 100%);
+  color: #f2e8d5;
 }
 
 .deck-btn-main {
-  border-color: rgba(255, 214, 196, 0.55);
-  background: #b5361b;
-  color: #fbf7f0;
+  border: 1.5px solid rgba(255, 212, 198, 0.38);
+  background: linear-gradient(155deg, #c93b28 0%, #9e2416 100%);
+  box-shadow:
+    0 6px 18px rgba(158, 36, 22, 0.45),
+    inset 0 1px 0 rgba(255, 220, 210, 0.42),
+    inset 0 -2px 0 rgba(72, 12, 6, 0.55);
+  color: #fff8f3;
+  font-weight: 600;
 }
 
 .deck-btn-main:hover {
-  background: #c93f22;
-  border-color: rgba(255, 214, 196, 0.7);
-  color: #fbf7f0;
+  filter: brightness(1.07);
+  border-color: rgba(255, 225, 215, 0.5);
+  color: #fff8f3;
 }
 
 /* Once-on-Load Hero Entrance */
@@ -445,8 +487,8 @@ body {
     scroll-behavior: auto;
   }
   .btn,
-  .stepping-stone,
-  .theme-slider-thumb {
+  .tag,
+  .stepping-stone {
     transition: none;
   }
   [data-enter] .enter-1,
