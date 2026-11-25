@@ -1,9 +1,18 @@
+@import url("https://fonts.googleapis.com/css2?family=Oswald:wght@600;700&display=swap");
 @import "tailwindcss";
 
 :root {
+  --font-hero: "Oswald", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Instrument Serif", Georgia, serif;
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+
+  /* Dark Smoked-Walnut Bridge Typography & Buttons (Same Wood Colors Across Themes) */
+  --deck-fg: #f6efe4;
+  --deck-fg-soft: #e2d6c4;
+  --deck-muted: #c4b59f;
+  --deck-line: rgba(14, 8, 4, 0.72);
+  --deck-line-glint: rgba(255, 222, 180, 0.14);
 }
 
 /* Night Zen Garden: Moonlit River Basalt & Quiet Black Pond */
@@ -13,12 +22,16 @@
   --fg-soft: #cac4b8;
   --muted: #969084;
 
+  --hero-title: #f5f0e6;
+  --hero-shadow: 0 8px 36px rgba(0, 0, 0, 0.98), 0 2px 6px rgba(0, 0, 0, 0.92);
+
   /* Chiseled Typography & Carved Groove Rules */
   --carved-heading: #f0ece3;
   --carved-top-shadow: rgba(0, 0, 0, 0.96);
   --carved-bot-glint: rgba(255, 255, 255, 0.14);
   --line: rgba(8, 10, 12, 0.85);
   --line-glint: rgba(255, 255, 255, 0.1);
+  --recess-bg: rgba(10, 13, 16, 0.42);
 
   --kohaku: #d9532f;
   --kohaku-fg: #fbf7f0;
@@ -41,12 +54,16 @@
   --fg-soft: #332f29;
   --muted: #5c564d;
 
+  --hero-title: #161b1e;
+  --hero-shadow: 0 4px 26px rgba(255, 255, 255, 0.72), 0 1px 0 rgba(255, 255, 255, 0.85);
+
   /* Chiseled Typography & Carved Groove Rules */
   --carved-heading: #191714;
   --carved-top-shadow: rgba(0, 0, 0, 0.24);
   --carved-bot-glint: rgba(255, 255, 255, 0.88);
   --line: rgba(38, 34, 28, 0.28);
   --line-glint: rgba(255, 255, 255, 0.78);
+  --recess-bg: rgba(168, 162, 150, 0.34);
 
   --kohaku: #b5381e;
   --kohaku-fg: #fffaf3;
@@ -106,13 +123,86 @@ body {
   font-family: var(--font-mono);
 }
 
+/* Monumental Display Wordmark: Wider & Taller, Still Taller Than Wide */
+.hero-wordmark {
+  display: inline-block;
+  font-family: var(--font-hero);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.055em;
+  line-height: 0.9;
+  font-size: clamp(2.55rem, 7.6vw, 7.5rem);
+  transform: scaleY(1.32) scaleX(1.08);
+  transform-origin: center center;
+  color: var(--hero-title);
+  text-shadow: var(--hero-shadow);
+  transition: color 0.45s ease, text-shadow 0.45s ease;
+}
+
+@media (min-width: 640px) {
+  .hero-wordmark {
+    white-space: nowrap;
+  }
+}
+
+/* Full-Width Arched Zen Garden Bridge */
+.wooden-deck {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  margin-top: 2.75rem;
+}
+
+.deck-surface-canvas {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.deck-content {
+  position: relative;
+  z-index: 2;
+  max-width: 52rem;
+  margin-inline: auto;
+  padding: 1.85rem 1.75rem 2.25rem;
+  color: var(--deck-fg);
+}
+
+@media (min-width: 640px) {
+  .deck-content {
+    padding: 2.15rem 2.75rem 2.55rem;
+  }
+}
+
+/* Interlocking Arare-Koboshi Flagstone Cluster for Long Sections */
+.stone-cluster {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.95rem;
+  width: min(calc(100% - 2rem), 54rem);
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .stone-cluster {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0.95rem;
+    align-items: stretch;
+  }
+}
+
 /* Staggered Tobi-Ishi Stepping Stone Path */
 .stepping-stone {
   position: relative;
   isolation: isolate;
-  width: min(calc(100% - 2rem), 48rem);
+  width: min(calc(100% - 2rem), 50rem);
   margin-inline: auto;
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stepping-stone-cluster {
+  width: 100%;
+  margin-inline: 0;
 }
 
 @media (min-width: 768px) {
@@ -130,15 +220,28 @@ body {
   z-index: 0;
 }
 
+/* Inscribed Safe Padding Driven by Closed-Form Superellipse Geometry */
 .stone-content {
   position: relative;
   z-index: 2;
-  padding: 2.5rem 2rem 2.75rem;
+  padding-block: var(--stone-pad-y, 2.75rem);
+  padding-inline: 2.25rem;
 }
 
 @media (min-width: 640px) {
   .stone-content {
-    padding: 3.15rem 3.5rem 3.35rem;
+    padding-inline: 4.5rem;
+  }
+}
+
+.stone-content-cluster {
+  padding-block: var(--stone-pad-y, 1.85rem);
+  padding-inline: 1.75rem;
+}
+
+@media (min-width: 640px) {
+  .stone-content-cluster {
+    padding-inline: 2.65rem;
   }
 }
 
@@ -149,10 +252,17 @@ body {
   align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 1.75rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.9rem;
   border-bottom: 1px solid var(--line);
   box-shadow: 0 1px 0 var(--line-glint);
+}
+
+.stone-heading:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: 0;
+  box-shadow: none;
 }
 
 .stone-inlay {
@@ -164,6 +274,17 @@ body {
   box-shadow:
     inset 0 1px 2px rgba(0, 0, 0, 0.65),
     0 1px 0 var(--carved-bot-glint);
+}
+
+/* Carved Specification Callout Cells Inside Case-Study Stones */
+.stone-spec-box {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--recess-bg);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.25),
+    0 1px 0 var(--line-glint);
 }
 
 /* Engraved Typography (Hori) */
@@ -211,11 +332,11 @@ body {
 /* Chiseled Stone-Inlay Buttons & Cinnabar Hanko Seal */
 .btn {
   display: inline-flex;
-  min-height: 42px;
+  min-height: 40px;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  padding: 0 18px;
+  padding: 0 17px;
   border: 1px solid var(--plaque-border);
   border-radius: 3px;
   background: var(--plaque-bg);
@@ -267,6 +388,34 @@ body {
   border-color: var(--hanko-border);
   color: var(--kohaku-fg);
   transform: translateY(-1.5px);
+}
+
+/* Dark Wood-Mounted Plaque Buttons on the Zen Bridge */
+.deck-btn {
+  border-color: rgba(255, 222, 180, 0.22);
+  background: rgba(14, 9, 6, 0.78);
+  box-shadow:
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.6),
+    0 1px 0 rgba(255, 222, 180, 0.14);
+  color: var(--deck-fg);
+}
+
+.deck-btn:hover {
+  background: rgba(24, 16, 10, 0.92);
+  border-color: rgba(246, 184, 112, 0.5);
+  color: var(--deck-fg);
+}
+
+.deck-btn-main {
+  border-color: rgba(255, 214, 196, 0.55);
+  background: #b5361b;
+  color: #fbf7f0;
+}
+
+.deck-btn-main:hover {
+  background: #c93f22;
+  border-color: rgba(255, 214, 196, 0.7);
+  color: #fbf7f0;
 }
 
 /* Once-on-Load Hero Entrance */
